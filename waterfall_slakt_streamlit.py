@@ -153,4 +153,4 @@ try:
         main()
 
 except:
-        print("Ikke overensstemmelse mellom valgt type ark og filtype")
+    print("Ikke overensstemmelse mellom valgt type ark og filtype")
