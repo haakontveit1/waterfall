@@ -13,6 +13,8 @@ import os
 import streamlit as st
 
 def les_data(uploaded_file=None):
+    filepath = 0
+    
     if uploaded_file is not None:
         # Les data fra opplastet Excel-fil
         df = pd.read_excel(uploaded_file, header=2)
