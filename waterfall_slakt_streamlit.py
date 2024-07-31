@@ -124,12 +124,12 @@ def main():
             st.error("Kan ikke beregne faktisk produksjon. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
             return
         
-        st.write(f'OEE 100%: {oee_100}')
-        st.write(f'Total stopptid: {round(stopptid, 2)}')
-        st.write(f'Tapt takt per minutt på grunn av stopp: {stopptid_takt}')
+        st.write(f'OEE 100%: {oee_100} fisk/minutt')
+        st.write(f'Total stopptid: {round(stopptid, 2) minutter}')
+        st.write(f'Tapt takt per minutt på grunn av stopp: {stopptid_takt} fisk/minutt')
         st.write("")
-        st.write(f'Arbeidstimer: {round(arbeidstimer/60,2)}')
-        st.write(f'Antall fisk produsert: {antall_fisk}')
+        st.write(f'Arbeidstimer: {round(arbeidstimer/60,2) timer}')
+        st.write(f'Antall fisk produsert: {antall_fisk} fisk')
         faktisk_takt = round(antall_fisk / arbeidstimer, 2)
         
         kjente_faktorer = round(stopptid_takt, 2)
