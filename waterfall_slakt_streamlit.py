@@ -71,7 +71,7 @@ def main():
     # Velg type analyse
     sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
     uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
-    analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
+    analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Gjennomsnitt for en uke"])
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
     
