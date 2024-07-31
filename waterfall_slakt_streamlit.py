@@ -64,8 +64,6 @@ def velg_dato():
 def main():
     st.title("Produksjonsanalyse")
     
-    # Velg type ark
-    sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
     
@@ -76,6 +74,8 @@ def main():
         st.warning("Vennligst last opp en Excel-fil for å fortsette.")
         return
 
+    # Velg type ark
+    sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
     # Last inn data fra opplastet fil
     df = les_data(uploaded_file)
     
