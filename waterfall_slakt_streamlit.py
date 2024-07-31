@@ -69,8 +69,8 @@ def main():
     st.title("Produksjonsanalyse")
     
     # Velg type analyse
-    analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
     sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
+    analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
     
