@@ -10,49 +10,51 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def les_data(uploaded_file, sheet_type):
+def les_data(uploaded_file):
     if uploaded_file is not None:
-        df = pd.read_excel(uploaded_file, header=2)
-    else:
-        df = None
-    return df
+        try:
+            df = pd.read_excel(uploaded_file, header=2)
+            return df
+        except Exception as e:
+            st.error(f"Feil ved lesing av Excel-filen: {e}")
+            return None
+    return None
 
 def beregn_stopptid(row, sheet_type):
-    if sheet_type == "slakt":
-        stopptid = (
-            row.iloc[27:31].fillna(0).sum() +
-            row.iloc[34:40].fillna(0).sum() / 6 +
-            row.iloc[40:51].fillna(0).sum()
-        )
-    elif sheet_type == "filet":
-        stopptid = (
-            row.iloc[32:40].fillna(0).sum() +
-            row.iloc[40:52].fillna(0).sum()
-        )
-    return stopptid
+    try:
+        if sheet_type == "slakt":
+            stopptid = (
+                row.iloc[27:31].fillna(0).sum() +
+                row.iloc[34:40].fillna(0).sum() / 6 +
+                row.iloc[40:51].fillna(0).sum()
+            )
+        elif sheet_type == "filet":
+            stopptid = (
+                row.iloc[32:40].fillna(0).sum() +
+                row.iloc[40:52].fillna(0).sum()
+            )
+        return stopptid
+    except Exception as e:
+        st.error(f"Feil ved beregning av stopptid: {e}")
+        return None
 
 def beregn_faktiskproduksjon(row, sheet_type):
-    print("hei")
     try:
         if sheet_type == "slakt":
             arbeidstimer = (datetime.strptime(str(row.iloc[3]), "%H:%M:%S") - datetime.strptime(str(row.iloc[2]), "%H:%M:%S")).seconds / 3600
             arbeidstimer = arbeidstimer * 60
             antall_fisk = row.iloc[4]
-            print("hei2")
         elif sheet_type == "filet":
             arbeidstimer = (datetime.strptime(str(row.iloc[7]), "%H:%M:%S") - datetime.strptime(str(row.iloc[6]), "%H:%M:%S")).seconds / 3600
             arbeidstimer = arbeidstimer * 60
             antall_fisk = row.iloc[12]
-            print("hei3")
         return arbeidstimer, antall_fisk
-    except:
-        print("Ikke overensstemmelse mellom valgt ")
-        arbeidstimer, antal_fisk = 0
-        print("hei4")
-        return arbeidstimer, antall_fisk
+    except Exception as e:
+        st.error(f"Feil ved beregning av faktisk produksjon: {e}")
+        return None, None
 
 def velg_dato():
-    år = st.number_input("Tast inn året du ønsker å sjekke:", min_value=2024, max_value=datetime.now().year)
+    år = st.number_input("Tast inn året du ønsker å sjekke:", min_value=2000, max_value=datetime.now().year)
     maneder = ["Januar", "Februar", "Mars", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Desember"]
     maaned = st.selectbox("Velg måned:", list(range(1, 13)), format_func=lambda x: maneder[x-1])
     dag = st.number_input("Tast inn dagen i måneden (1-31):", min_value=1, max_value=31)
@@ -75,9 +77,9 @@ def main():
         return
 
     # Last inn data fra opplastet fil
-    df = les_data(uploaded_file, sheet_type)
+    df = les_data(uploaded_file)
     
-    if df is None or df.empty:
+    if df is None:
         st.warning("Ingen data tilgjengelig i den opplastede filen. Vennligst last opp en gyldig Excel-fil.")
         return
 
@@ -88,7 +90,7 @@ def main():
         df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0], format="%Y-%m-%d %H:%M:%S")
     except ValueError as e:
         st.error(f"Feil ved konvertering av dato: {e}")
-        st.write("Første kolonne verdier:", df.iloc[:, 0].head())
+        st.write("Det kan være et problem med datoformatet i filen, eller du har lastet opp feil type fil.")
         return
     
     # Sjekk om valgt dato finnes i første kolonne
@@ -97,21 +99,30 @@ def main():
     st.write("Statistikk")
     
     # Filtrer datoene for å sammenligne basert på år, måned og dag
-    df['Dato'] = df.iloc[:, 0].dt.date
+    try:
+        df['Dato'] = df.iloc[:, 0].dt.date
+    except Exception as e:
+        st.error(f"Feil ved behandling av datoer: {e}")
+        st.write("Det kan være et problem med strukturen på den opplastede filen.")
+        return
+
     valgt_dato_enkel = valgt_dato.date()
     
     if valgt_dato_enkel in df['Dato'].values:
         row = df[df['Dato'] == valgt_dato_enkel].iloc[0]
 
         stopptid = beregn_stopptid(row, sheet_type)
+        if stopptid is None:
+            st.error("Kan ikke beregne stopptid. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
+            return
+        
         stopptid_impact = stopptid * oee_100
         stopptid_takt = round(stopptid_impact / 60 / 8, 2)
         
-        print(arbeidstimer)
-        print(antall_fisk)
-
-        if arbeidstimer or antall_fisk != 0:
-            arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
+        arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
+        if arbeidstimer is None or antall_fisk is None:
+            st.error("Kan ikke beregne faktisk produksjon. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
+            return
         
         st.write(f'OEE 100%: {oee_100}')
         st.write(f'Total stopptid: {round(stopptid, 2)}')
