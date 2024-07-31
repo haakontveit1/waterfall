@@ -47,13 +47,14 @@ def velg_dato():
     valgt_dato = datetime(år, maaned, dag)
     return valgt_dato
 
+
 def main():
     st.title("Produksjonsanalyse")
     oee_100 = 150
     stiplet_hoeyde = 120
 
     # Filopplastingsseksjon
-    uploaded_file = st.file_uploader('Velg en Excel-fil (må være et "input"-ark, eks inputslakt, inputfilet)', type=["xlsx"])
+    uploaded_file = st.file_uploader(f'Velg en Excel-fil (må være et "input"-ark, eks inputslakt, inputfilet). Dersom du ikke laster opp noe, brukes det nyeste opplastede excelarket: {les_data()}', type=["xlsx"])
     
     # Last inn data enten fra opplastet fil eller standard fil
     df = les_data(uploaded_file)
