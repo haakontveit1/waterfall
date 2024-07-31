@@ -135,46 +135,48 @@ def main():
 
         # Define the formatted output using HTML
         output_html = f"""
-        <table style="width:100%">
+        <table style="width:100%; border-spacing: 0;">
         <tr>
-            <td style="text-align:left; width:70%;">OEE 100%:</td>
-            <td style="text-align:right;">{oee_100} fisk/minutt</td>
+            <td style="text-align:left; width:70%; padding-right: 10px;">OEE 100%:</td>
+            <td style="text-align:right; width:30%;">{oee_100} fisk/minutt</td>
         </tr>
         <tr>
-            <td style="text-align:left;">Total stopptid:</td>
-            <td style="text-align:right;">{round(stopptid, 2)} minutter</td>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Total stopptid:</td>
+            <td style="text-align:right; width:30%;">{round(stopptid, 2)} minutter</td>
         </tr>
         <tr>
-            <td style="text-align:left;">Tapt takt per minutt på grunn av stopp:</td>
-            <td style="text-align:right;">{stopptid_takt} fisk/minutt</td>
-        </tr>
-        </table>
-        <table style="width:100%">
-        <tr>
-            <td style="text-align:left;">Arbeidstimer:</td>
-            <td style="text-align:right;">{round(arbeidstimer/60, 2)} timer</td>
-        </tr>
-        <tr>
-            <td style="text-align:left;">Antall fisk produsert:</td>
-            <td style="text-align:right;">{antall_fisk} fisk</td>
-        </tr>
-        <tr>
-            <td style="text-align:left;">Antall fisk tapt pga stopptid:</td>
-            <td style="text-align:right;">{round(stopptid_impact, 2)} fisk</td>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Tapt takt per minutt på grunn av stopp:</td>
+            <td style="text-align:right; width:30%;">{stopptid_takt} fisk/minutt</td>
         </tr>
         </table>
-        <table style="width:100%">
+        <br><br>  <!-- Tomme linjer for å skille seksjonene -->
+        <table style="width:100%; border-spacing: 0;">
         <tr>
-            <td style="text-align:left;">Annet tap (unoterte feil, operatørhastighet etc):</td>
-            <td style="text-align:right;">{annet} minutter</td>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Arbeitstimer:</td>
+            <td style="text-align:right; width:30%;">{round(arbeidstimer/60, 2)} timer</td>
         </tr>
         <tr>
-            <td style="text-align:left;">Faktisk takt:</td>
-            <td style="text-align:right;">{faktisk_takt} fisk/minutt</td>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Antall fisk produsert:</td>
+            <td style="text-align:right; width:30%;">{antall_fisk} fisk</td>
         </tr>
         <tr>
-            <td style="text-align:left;">Avstand fra 80% OEE takttid:</td>
-            <td style="text-align:right;">{round(stiplet_hoeyde - faktisk_takt, 2)} fisk/minutt</td>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Antall fisk tapt pga stopptid:</td>
+            <td style="text-align:right; width:30%;">{round(stopptid_impact, 2)} fisk</td>
+        </tr>
+        </table>
+        <br><br>
+        <table style="width:100%; border-spacing: 0;">
+        <tr>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Annet tap (unoterte feil, operatørhastighet etc):</td>
+            <td style="text-align:right; width:30%;">{annet} minutter</td>
+        </tr>
+        <tr>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Faktisk takt:</td>
+            <td style="text-align:right; width:30%;">{faktisk_takt} fisk/minutt</td>
+        </tr>
+        <tr>
+            <td style="text-align:left; width:70%; padding-right: 10px;">Avstand fra 80% OEE takttid:</td>
+            <td style="text-align:right; width:30%;">{round(stiplet_hoeyde - faktisk_takt, 2)} fisk/minutt</td>
         </tr>
         </table>
         """
