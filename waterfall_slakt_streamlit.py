@@ -148,8 +148,10 @@ def main():
             <td style="text-align:left;">Tapt takt per minutt på grunn av stopp:</td>
             <td style="text-align:right;">{stopptid_takt} fisk/minutt</td>
         </tr>
+        </table>
+        <table style="width:100%">
         <tr>
-            <td style="text-align:left;">Arbeitstimer:</td>
+            <td style="text-align:left;">Arbeidstimer:</td>
             <td style="text-align:right;">{round(arbeidstimer/60, 2)} timer</td>
         </tr>
         <tr>
@@ -160,6 +162,8 @@ def main():
             <td style="text-align:left;">Antall fisk tapt pga stopptid:</td>
             <td style="text-align:right;">{round(stopptid_impact, 2)} fisk</td>
         </tr>
+        </table>
+        <table style="width:100%">
         <tr>
             <td style="text-align:left;">Annet tap (unoterte feil, operatørhastighet etc):</td>
             <td style="text-align:right;">{annet} minutter</td>
