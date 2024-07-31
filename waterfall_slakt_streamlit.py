@@ -128,24 +128,49 @@ def main():
         label_width = 70  # Adjust this value based on your label lengths
         value_width = 70  # Adjust this value based on your value lengths
 
-        # Format the output with padding
-        st.write(f'OEE 100%:'.ljust(label_width) + f'{oee_100:<{value_width}} fisk/minutt')
-        st.write(f'Total stopptid:'.ljust(label_width) + f'{round(stopptid, 2):<{value_width}} minutter')
-        st.write(f'Tapt takt per minutt på grunn av stopp:'.ljust(label_width) + f'{stopptid_takt:<{value_width}} fisk/minutt')
-        st.write("")
-        st.write(f'Arbeidstimer:'.ljust(label_width) + f'{round(arbeidstimer/60, 2):<{value_width}} timer')
-        st.write(f'Antall fisk produsert:'.ljust(label_width) + f'{antall_fisk:<{value_width}} fisk')
-        faktisk_takt = round(antall_fisk / arbeidstimer, 2)
+        output_html = f"""
+        <table style="width:100%">
+        <tr>
+            <td style="text-align:left; width:70%;">OEE 100%:</td>
+            <td style="text-align:right;">{oee_100} fisk/minutt</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Total stopptid:</td>
+            <td style="text-align:right;">{round(stopptid, 2)} minutter</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Tapt takt per minutt på grunn av stopp:</td>
+            <td style="text-align:right;">{stopptid_takt} fisk/minutt</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Arbeitstimer:</td>
+            <td style="text-align:right;">{round(arbeidstimer/60, 2)} timer</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Antall fisk produsert:</td>
+            <td style="text-align:right;">{antall_fisk} fisk</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Antall fisk tapt pga stopptid:</td>
+            <td style="text-align:right;">{round(stopptid_impact, 2)} fisk</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Annet tap (unoterte feil, operatørhastighet etc):</td>
+            <td style="text-align:right;">{annet} minutter</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Faktisk takt:</td>
+            <td style="text-align:right;">{faktisk_takt} fisk/minutt</td>
+        </tr>
+        <tr>
+            <td style="text-align:left;">Avstand fra 80% OEE takttid:</td>
+            <td style="text-align:right;">{round(stiplet_hoeyde - faktisk_takt, 2)} fisk/minutt</td>
+        </tr>
+        </table>
+        """
 
-        kjente_faktorer = round(stopptid_takt, 2)
-        annet = oee_100 - kjente_faktorer - faktisk_takt
-        annet = round(annet, 2)
-
-        st.write(f'Antall fisk tapt pga stopptid:'.ljust(label_width) + f'{round(stopptid_impact, 2):<{value_width}} fisk')
-        st.write(f'Annet tap (unoterte feil, operatørhastighet etc):'.ljust(label_width) + f'{annet:<{value_width}} minutter')
-        st.write("")
-        st.write(f'Faktisk takt:'.ljust(label_width) + f'{faktisk_takt:<{value_width}} fisk/minutt')
-        st.write(f'Avstand fra 80% OEE takttid:'.ljust(label_width) + f'{round(stiplet_hoeyde - faktisk_takt, 2):<{value_width}} fisk/minutt')
+# Display the output in Streamlit using st.markdown
+st.markdown(output_html, unsafe_allow_html=True)
 
 
         # Data for waterfall grafen
