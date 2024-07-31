@@ -212,8 +212,8 @@ def main():
         if sheet_type == "filet":
             fisk = "fileter"
 
-        ax.set_ylabel('Produksjonsverdi')
-        ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato_enkel} ({sheet_type})')
+        ax.set_ylabel('Antall {fisk} per minutt')
+        ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato_enkel} (på {sheet_type})')
         st.pyplot(fig)
 
     else:
