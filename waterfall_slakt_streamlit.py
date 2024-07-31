@@ -125,10 +125,10 @@ def main():
             return
         
         st.write(f'OEE 100%: {oee_100} fisk/minutt')
-        st.write(f'Total stopptid: {round(stopptid, 2)}minutter')
+        st.write(f'Total stopptid: {round(stopptid, 2)} minutter')
         st.write(f'Tapt takt per minutt på grunn av stopp: {stopptid_takt} fisk/minutt')
         st.write("")
-        st.write(f'Arbeidstimer: {round(arbeidstimer/60,2)}timer')
+        st.write(f'Arbeidstimer: {round(arbeidstimer/60,2)} timer')
         st.write(f'Antall fisk produsert: {antall_fisk} fisk')
         faktisk_takt = round(antall_fisk / arbeidstimer, 2)
         
@@ -136,11 +136,11 @@ def main():
         annet = oee_100 - kjente_faktorer - faktisk_takt
         annet = round(annet, 2)
 
-        st.write(f'Antall fisk tapt pga stopptid: {round(stopptid_impact,2)}')
-        st.write(f'Annet tap (unoterte feil, operatørhastighet etc): {annet}')
+        st.write(f'Antall fisk tapt pga stopptid: {round(stopptid_impact,2)} fisk')
+        st.write(f'Annet tap (unoterte feil, operatørhastighet etc): {annet} minutter')
         st.write("")
-        st.write(f'Faktisk takt: {faktisk_takt}')
-        st.write(f'Avstand fra 80% OEE takttid: {round(stiplet_hoeyde - faktisk_takt, 2)}')
+        st.write(f'Faktisk takt: {faktisk_takt} fisk/minutt')
+        st.write(f'Avstand fra 80% OEE takttid: {round(stiplet_hoeyde - faktisk_takt, 2)} fisk/minutt')
 
         # Data for waterfall grafen
         stages = ['100% OEE', 'Stopptid', 'Annet']
