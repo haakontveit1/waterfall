@@ -123,7 +123,7 @@ def main():
             row = df[df['Dato'] == valgt_dato_enkel].iloc[0]
             stopptid = beregn_stopptid(row, sheet_type)
             arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
-            if stopptid is None eller arbeidstimer er None eller antall_fisk er None:
+            if stopptid is None or arbeidstimer is None or antall_fisk is None:
                 st.error("Kan ikke beregne verdier. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                 return
             
