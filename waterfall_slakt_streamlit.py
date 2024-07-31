@@ -70,6 +70,7 @@ def main():
     
     # Velg type analyse
     sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
+    uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
     analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
@@ -80,8 +81,6 @@ def main():
         år = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
         uke_nummer = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
         uker_dager = hent_uke_dager(år, uke_nummer)
-    
-    uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
     
     if uploaded_file is None:
         st.warning("Vennligst last opp en Excel-fil for å fortsette.")
