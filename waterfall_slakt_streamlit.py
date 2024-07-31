@@ -57,7 +57,7 @@ def velg_dato():
     år = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
     maneder = ["Januar", "Februar", "Mars", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Desember"]
     maaned = st.selectbox("Velg måned:", list(range(1, 13)), format_func=lambda x: maneder[x-1])
-    dag = st.number_input("Tast inn dagen i måneden (1-31):", min_value=1, max_value=31)
+    dag = st.number_input("Velg dag (1-31):", min_value=1, max_value=31)
     valgt_dato = datetime(år, maaned, dag)
     return valgt_dato
 
