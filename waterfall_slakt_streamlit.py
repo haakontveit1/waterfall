@@ -125,7 +125,7 @@ def main():
             return
         
         st.write(f'OEE 100%: {oee_100} fisk/minutt')
-        st.write(f'Total stopptid: {round(stopptid, 2) minutter}')
+        st.write(f'Total stopptid: {round(stopptid, 2)}minutter')
         st.write(f'Tapt takt per minutt på grunn av stopp: {stopptid_takt} fisk/minutt')
         st.write("")
         st.write(f'Arbeidstimer: {round(arbeidstimer/60,2) timer}')
