@@ -103,6 +103,9 @@ def main():
         stopptid_impact = stopptid * oee_100
         stopptid_takt = round(stopptid_impact / 60 / 8, 2)
         
+        print(arbeidstimer)
+        print(antall_fisk)
+
         if arbeidstimer or antall_fisk != 0:
             arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
         
