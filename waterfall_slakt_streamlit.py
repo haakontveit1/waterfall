@@ -12,33 +12,34 @@ import matplotlib.pyplot as plt
 import os
 import streamlit as st
 
-def les_data():
-    # Få stien til den katalogen som inneholder dette skriptet
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    # Bygg stien til Excel-filen
-    file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
-    # Les data fra Excel-filen
-    df = pd.read_excel(file_path, header=2)
+def les_data(uploaded_file=None):
+    if uploaded_file is not None:
+        # Les data fra opplastet Excel-fil
+        df = pd.read_excel(uploaded_file, header=2)
+    else:
+        # Få stien til den katalogen som inneholder dette skriptet
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        # Bygg stien til Excel-filen
+        file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
+        # Les data fra Excel-filen
+        df = pd.read_excel(file_path, header=2)
     return df
 
 def beregn_stopptid(row):
-    # Kalkuler stopptid ved bruk av kolonneindekser (0-indeksert)
     stopptid = (
-        row.iloc[27] + row.iloc[28] + row.iloc[29] + row.iloc[30] +  # AB til AE (kolonneindekser 27-30)
-        (row.iloc[34] + row.iloc[35] + row.iloc[36] + row.iloc[37] + row.iloc[38] + row.iloc[39]) / 6 +  # AI til AN (kolonneindekser 34-39)
-        row.iloc[40] + row.iloc[41] + row.iloc[42] + row.iloc[43] + row.iloc[44] + row.iloc[45] + row.iloc[46] + row.iloc[47] + row.iloc[48] + row.iloc[49] + row.iloc[50]  # AO til AY (kolonneindekser 40-50)
+        row.iloc[27] + row.iloc[28] + row.iloc[29] + row.iloc[30] +
+        (row.iloc[34] + row.iloc[35] + row.iloc[36] + row.iloc[37] + row.iloc[38] + row.iloc[39]) / 6 +
+        row.iloc[40] + row.iloc[41] + row.iloc[42] + row.iloc[43] + row.iloc[44] + row.iloc[45] + row.iloc[46] + row.iloc[47] + row.iloc[48] + row.iloc[49] + row.iloc[50]
     )
     return stopptid
 
-def beregn_faktiskproduksjon(row): 
-    # Kalkuler faktisk produksjon ved bruk av kolonneindekser (0-indeksert)
-    arbeidstimer = (datetime.strptime(str(row.iloc[3]), "%H:%M:%S") - datetime.strptime(str(row.iloc[2]), "%H:%M:%S")).seconds / 3600  # D (kolonne 3) - C (kolonne 2)
+def beregn_faktiskproduksjon(row):
+    arbeidstimer = (datetime.strptime(str(row.iloc[3]), "%H:%M:%S") - datetime.strptime(str(row.iloc[2]), "%H:%M:%S")).seconds / 3600
     arbeidstimer = arbeidstimer * 60
-    antall_fisk = row.iloc[4]  # E (kolonne 4)
+    antall_fisk = row.iloc[4]
     return arbeidstimer, antall_fisk
 
 def velg_dato():
-    # Spør bruker om år, måned og dag
     år = st.number_input("Tast inn året du ønsker å sjekke:", min_value=2000, max_value=datetime.now().year)
     maneder = ["Januar", "Februar", "Mars", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Desember"]
     maaned = st.selectbox("Velg måned:", list(range(1, 13)), format_func=lambda x: maneder[x-1])
@@ -50,8 +51,17 @@ def main():
     st.title("Produksjonsanalyse")
     oee_100 = 150
     stiplet_hoeyde = 120
+
+    # Filopplastingsseksjon
+    uploaded_file = st.file_uploader("Velg en Excel-fil", type=["xlsx"])
     
-    df = les_data()
+    # Last inn data enten fra opplastet fil eller standard fil
+    df = les_data(uploaded_file)
+    
+    if df is None or df.empty:
+        st.warning("Ingen data tilgjengelig. Last opp en gyldig Excel-fil.")
+        return
+
     valgt_dato = velg_dato()
 
     # Konverter første kolonne til datetime-format
@@ -88,12 +98,10 @@ def main():
         st.write(f'Antall fisk produsert: {antall_fisk}')
         faktisk_takt = round(antall_fisk / arbeidstimer, 2)
         
-        # Beregn ukjent faktor "Annet"
         kjente_faktorer = round(stopptid_takt, 2)
         annet = oee_100 - kjente_faktorer - faktisk_takt
         annet = round(annet, 2)
 
-        # Print verdiene for de forskjellige kolonnene
         st.write(f'Antall fisk tapt pga stopptid: {round(stopptid_impact,2)}')
         st.write(f'Annet tap (unoterte feil, operatørhastighet etc): {annet}')
         st.write("")
@@ -104,7 +112,6 @@ def main():
         stages = ['100% OEE', 'Stopptid', 'Annet']
         values = [oee_100, -stopptid_takt, -annet]
 
-        # Beregn mellomverdier
         cum_values = np.cumsum([0] + values).tolist()
         value_starts = cum_values[:-1]
 
@@ -134,3 +141,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
