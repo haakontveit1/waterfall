@@ -125,7 +125,7 @@ def main():
             return
         
         # Define the width for alignment
-        label_width = 70  # Adjust this value based on your label lengths
+        label_width = 150  # Adjust this value based on your label lengths
         value_width = 10  # Adjust this value based on your value lengths
 
         # Format the output with padding
