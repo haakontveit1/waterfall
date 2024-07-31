@@ -71,25 +71,25 @@ def main():
     fisk = "fisk"
     pa = " (på slakt)"
 
-    # Velg type analyse
+    # Velg type ark
     sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
     if sheet_type == "filet":
         fisk = "fileter"
-        pa = ""
+        pa = " (på filet)"
 
     uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
     
     # Velg type analyse
-    analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
+    analysis_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
     
-    if analyse_type == "Spesifikk dato":
+    if analysis_type == "Spesifikk dato":
         valgt_dato = velg_dato()
     else:
-        år = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
-        uke_nummer = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
-        uker_dager = hent_uke_dager(år, uke_nummer)
+        year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
+        week_number = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
+        week_days = hent_uke_dager(year, week_number)
     
     if uploaded_file is None:
         st.warning("Vennligst last opp en Excel-fil for å fortsette.")
@@ -117,7 +117,7 @@ def main():
         st.write("Det kan være et problem med strukturen på den opplastede filen.")
         return
 
-    if analyse_type == "Spesifikk dato":
+    if analysis_type == "Spesifikk dato":
         valgt_dato_enkel = valgt_dato.date()
         if valgt_dato_enkel in df['Dato'].values:
             row = df[df['Dato'] == valgt_dato_enkel].iloc[0]
@@ -141,7 +141,7 @@ def main():
             cum_values = np.cumsum([0] + values).tolist()
             value_starts = cum_values[:-1]
 
-            fig, ax = plt.subplots(figsize=(10, 6), dpi=100)  # Larger figure size and higher DPI for clarity
+            fig, ax = plt.subplots(figsize=(10, 5), dpi=100)  # Juster figurstørrelse og DPI
             colors = ['blue', 'red', 'orange']
 
             for i in range(len(stages)):
@@ -165,7 +165,7 @@ def main():
             st.warning("Datoen du valgte finnes ikke i input-arket. Dette er enten fordi du tastet inn en ugyldig dato eller fordi datoen ikke hadde noen produksjon (eks helg).")
     else:
         daglig_data = []
-        for dag in uker_dager:
+        for dag in week_days:
             dag_enkel = dag.date()
             if dag_enkel in df['Dato'].values:
                 row = df[df['Dato'] == dag_enkel].iloc[0]
@@ -180,8 +180,8 @@ def main():
             st.warning("Ingen gyldige data funnet for den valgte uken.")
             return
 
-        # Plotting for each day in a 1x6 layout
-        fig, axes = plt.subplots(6, 1, figsize=(10, 60), dpi=100)  # Increase figure size and DPI for clarity
+        # Plotting for each day
+        fig, axes = plt.subplots(6, 1, figsize=(10, 30), dpi=100)  # Juster figurstørrelse og DPI
         for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
             ax = axes[i]
             stopptid_impact = stopptid * oee_100
@@ -245,7 +245,7 @@ def main():
         ax.text('Takttid', avg_faktisk_takt / 2, f'{avg_faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
         ax.text('Takttid',avg_faktisk_takt + (stiplet_hoeyde - avg_faktisk_takt) / 2, f'{round(stiplet_hoeyde - avg_faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
 
-        ax.set_title(f'Ukesnitt {år}-W{uke_nummer}', fontsize=10)
+        ax.set_title(f'Ukesnitt {year}-W{week_number}', fontsize=10)
 
         plt.tight_layout()
         st.pyplot(fig)
