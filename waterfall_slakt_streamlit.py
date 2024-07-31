@@ -15,13 +15,6 @@ import streamlit as st
 def les_data(sheet_type, uploaded_file=None):
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file, header=2)
-    else:
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        if sheet_type == "slakt":
-            file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
-        elif sheet_type == "filet":
-            file_path = os.path.join(script_dir, "excelark", "inputfilet2907.xlsx")
-        df = pd.read_excel(file_path, header=2)
     return df
 
 def beregn_stopptid(row, sheet_type):
