@@ -123,7 +123,7 @@ def main():
             row = df[df['Dato'] == valgt_dato_enkel].iloc[0]
             stopptid = beregn_stopptid(row, sheet_type)
             arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
-            if stopptid is None or arbeidstimer is None or antall_fisk is None:
+            if stopptid is None eller arbeidstimer er None eller antall_fisk er None:
                 st.error("Kan ikke beregne verdier. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                 return
             
@@ -171,7 +171,7 @@ def main():
                 row = df[df['Dato'] == dag_enkel].iloc[0]
                 stopptid = beregn_stopptid(row, sheet_type)
                 arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
-                if stopptid is None or arbeidstimer is None or antall_fisk is None:
+                if stopptid is None eller arbeidstimer er None eller antall_fisk er None:
                     st.error(f"Kan ikke beregne verdier for {dag.strftime('%d.%m.%Y')}. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                     return
                 daglig_data.append((dag, stopptid, arbeidstimer, antall_fisk))
@@ -180,10 +180,10 @@ def main():
             st.warning("Ingen gyldige data funnet for den valgte uken.")
             return
 
-        # Plotting for each day
-        fig, axes = plt.subplots(2, 3, figsize=(15, 10), dpi=100)  # Increase figure size and DPI
+        # Plotting for each day in a 1x6 layout
+        fig, axes = plt.subplots(6, 1, figsize=(10, 60), dpi=100)  # Increase figure size and DPI for clarity
         for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
-            ax = axes.flatten()[i]
+            ax = axes[i]
             stopptid_impact = stopptid * oee_100
             stopptid_takt = round(stopptid_impact / 60 / 8, 2)
             faktisk_takt = round(antall_fisk / arbeidstimer, 2)
@@ -199,15 +199,15 @@ def main():
 
             colors = ['blue', 'red', 'orange']
 
-            for i in range(len(stages)):
-                ax.bar(stages[i], values[i], bottom=value_starts[i], color=colors[i], edgecolor='black')
+            for j in range(len(stages)):
+                ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
 
             ax.bar('Takttid', faktisk_takt, bottom=0, color='green', edgecolor='black')
             ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
 
-            for i in range(len(stages)):
-                y_pos = value_starts[i] + values[i] / 2
-                ax.text(stages[i], y_pos, f'{values[i]}', ha='center', va='center', color='white', fontweight='bold')
+            for j in range(len(stages)):
+                y_pos = value_starts[j] + values[j] / 2
+                ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
 
             ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
             ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
@@ -225,22 +225,22 @@ def main():
         avg_annet = oee_100 - avg_kjente_faktorer - avg_faktisk_takt
         avg_annet = round(avg_annet, 2)
 
-        ax = axes.flatten()[-1]
+        ax = axes[-1]
         stages = ['100% OEE', 'Stopptid', 'Annet']
         values = [oee_100, -avg_stopptid_takt, -avg_annet]
 
         cum_values = np.cumsum([0] + values).tolist()
         value_starts = cum_values[:-1]
 
-        for i in range(len(stages)):
-            ax.bar(stages[i], values[i], bottom=value_starts[i], color=colors[i], edgecolor='black')
+        for j in range(len(stages)):
+            ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
 
         ax.bar('Takttid', avg_faktisk_takt, bottom=0, color='green', edgecolor='black')
         ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
 
-        for i in range(len(stages)):
-            y_pos = value_starts[i] + values[i] / 2
-            ax.text(stages[i], y_pos, f'{values[i]}', ha='center', va='center', color='white', fontweight='bold')
+        for j in range(len(stages)):
+            y_pos = value_starts[j] + values[j] / 2
+            ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
 
         ax.text('Takttid', avg_faktisk_takt / 2, f'{avg_faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
         ax.text('Takttid',avg_faktisk_takt + (stiplet_hoeyde - avg_faktisk_takt) / 2, f'{round(stiplet_hoeyde - avg_faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
