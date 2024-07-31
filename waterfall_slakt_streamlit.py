@@ -44,6 +44,7 @@ def beregn_faktiskproduksjon(row, sheet_type):
         return arbeidstimer, antall_fisk
     except:
         print("Ikke overensstemmelse mellom valgt ")
+        return arbeidstimer, antall_fisk = 0
 
 def velg_dato():
     år = st.number_input("Tast inn året du ønsker å sjekke:", min_value=2024, max_value=datetime.now().year)
@@ -101,7 +102,8 @@ def main():
         stopptid_impact = stopptid * oee_100
         stopptid_takt = round(stopptid_impact / 60 / 8, 2)
         
-        arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
+        if arbeidstimer or antall_fisk != 0:
+            arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
         
         st.write(f'OEE 100%: {oee_100}')
         st.write(f'Total stopptid: {round(stopptid, 2)}')
