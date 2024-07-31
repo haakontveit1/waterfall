@@ -32,20 +32,23 @@ def beregn_stopptid(row, sheet_type):
     return stopptid
 
 def beregn_faktiskproduksjon(row, sheet_type):
+    print("hei")
     try:
         if sheet_type == "slakt":
             arbeidstimer = (datetime.strptime(str(row.iloc[3]), "%H:%M:%S") - datetime.strptime(str(row.iloc[2]), "%H:%M:%S")).seconds / 3600
             arbeidstimer = arbeidstimer * 60
             antall_fisk = row.iloc[4]
+            print("hei2")
         elif sheet_type == "filet":
             arbeidstimer = (datetime.strptime(str(row.iloc[7]), "%H:%M:%S") - datetime.strptime(str(row.iloc[6]), "%H:%M:%S")).seconds / 3600
             arbeidstimer = arbeidstimer * 60
             antall_fisk = row.iloc[12]
+            print("hei3")
         return arbeidstimer, antall_fisk
     except:
         print("Ikke overensstemmelse mellom valgt ")
         arbeidstimer, antal_fisk = 0
-        print("hei")
+        print("hei4")
         return arbeidstimer, antall_fisk
 
 def velg_dato():
