@@ -4,16 +4,14 @@ Created on Wed Jul 31 08:53:23 2024
 
 @author: HåkonTveiten
 """
-
 import pandas as pd
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 import streamlit as st
 
-def les_data(sheet_type, uploaded_file=None):
-    if uploaded_file is None:
+def les_data(uploaded_file, sheet_type):
+    if uploaded_file is not None:
         df = pd.read_excel(uploaded_file, header=2)
     else:
         df = None
@@ -21,17 +19,15 @@ def les_data(sheet_type, uploaded_file=None):
 
 def beregn_stopptid(row, sheet_type):
     if sheet_type == "slakt":
-        # Use .fillna(0) to replace NaN values with 0
         stopptid = (
-            row.iloc[27:31].fillna(0).sum() +  # AB til AE (kolonneindekser 27-30)
-            row.iloc[34:40].fillna(0).sum() / 6 +  # AI til AN (kolonneindekser 34-39)
-            row.iloc[40:51].fillna(0).sum()  # AO til AY (kolonneindekser 40-50)
+            row.iloc[27:31].fillna(0).sum() +
+            row.iloc[34:40].fillna(0).sum() / 6 +
+            row.iloc[40:51].fillna(0).sum()
         )
     elif sheet_type == "filet":
-        # Use .fillna(0) to replace NaN values with 0
         stopptid = (
-            row.iloc[32:40].fillna(0).sum() +  # AI til AN (kolonneindekser 32-39)
-            row.iloc[40:52].fillna(0).sum()  # AO til BA (kolonneindekser 40-51)
+            row.iloc[32:40].fillna(0).sum() +
+            row.iloc[40:52].fillna(0).sum()
         )
     return stopptid
 
@@ -65,11 +61,15 @@ def main():
     # Filopplastingsseksjon
     uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
     
-    # Last inn data enten fra opplastet fil eller standard fil
-    df = les_data(sheet_type, uploaded_file)
+    if uploaded_file is None:
+        st.warning("Vennligst last opp en Excel-fil for å fortsette.")
+        return
+
+    # Last inn data fra opplastet fil
+    df = les_data(uploaded_file, sheet_type)
     
     if df is None or df.empty:
-        st.warning("Ingen data tilgjengelig. Last opp en gyldig Excel-fil.")
+        st.warning("Ingen data tilgjengelig i den opplastede filen. Vennligst last opp en gyldig Excel-fil.")
         return
 
     valgt_dato = velg_dato()
