@@ -53,7 +53,7 @@ def main():
     stiplet_hoeyde = 120
 
     # Filopplastingsseksjon
-    uploaded_file = st.file_uploader("Velg en Excel-fil", type=["xlsx"])
+    uploaded_file = st.file_uploader('Velg en Excel-fil (må være et "input"-ark)', type=["xlsx"])
     
     # Last inn data enten fra opplastet fil eller standard fil
     df = les_data(uploaded_file)
