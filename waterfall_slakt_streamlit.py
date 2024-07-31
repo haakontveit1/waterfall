@@ -16,8 +16,7 @@ def les_data(sheet_type, uploaded_file=None):
     if uploaded_file is None:
         df = pd.read_excel(uploaded_file, header=2)
     else:
-        print("he")
-        df = pd.read_excel(file_path, header=2)
+        df = None
     return df
 
 def beregn_stopptid(row, sheet_type):
