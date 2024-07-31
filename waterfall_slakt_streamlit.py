@@ -128,6 +128,12 @@ def main():
         label_width = 70  # Adjust this value based on your label lengths
         value_width = 70  # Adjust this value based on your value lengths
 
+        faktisk_takt = round(antall_fisk / arbeidstimer, 2)
+        kjente_faktorer = round(stopptid_takt, 2)
+        annet = oee_100 - kjente_faktorer - faktisk_takt
+        annet = round(annet, 2)
+
+        # Define the formatted output using HTML
         output_html = f"""
         <table style="width:100%">
         <tr>
@@ -171,7 +177,6 @@ def main():
 
         # Display the output in Streamlit using st.markdown
         st.markdown(output_html, unsafe_allow_html=True)
-
 
         # Data for waterfall grafen
         stages = ['100% OEE', 'Stopptid', 'Annet']
