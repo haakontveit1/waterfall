@@ -13,9 +13,6 @@ import os
 import streamlit as st
 
 def les_data(uploaded_file=None):
-    # Bygg stien til Excel-filen
-    file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
-    
     if uploaded_file is not None:
         # Les data fra opplastet Excel-fil
         df = pd.read_excel(uploaded_file, header=2)
@@ -23,9 +20,10 @@ def les_data(uploaded_file=None):
         # Få stien til den katalogen som inneholder dette skriptet
         script_dir = os.path.dirname(os.path.realpath(__file__))
         # Bygg stien til Excel-filen
+        file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
         # Les data fra Excel-filen
         df = pd.read_excel(file_path, header=2)
-    return df, filepath
+    return df
 
 def beregn_stopptid(row):
     stopptid = (
@@ -54,13 +52,16 @@ def main():
     st.title("Produksjonsanalyse")
     oee_100 = 150
     stiplet_hoeyde = 120
-    navn = les_data()[1] 
+
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    # Bygg stien til Excel-file
+    navn = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
 
     # Filopplastingsseksjon
     uploaded_file = st.file_uploader(f'Velg en Excel-fil (må være et "input"-ark, eks inputslakt, inputfilet). Dersom du ikke laster opp noe, brukes det nyeste opplastede excelarket: {navn}', type=["xlsx"])
     
     # Last inn data enten fra opplastet fil eller standard fil
-    df = les_data(uploaded_file)[0]
+    df = les_data(uploaded_file)
     
     if df is None or df.empty:
         st.warning("Ingen data tilgjengelig. Last opp en gyldig Excel-fil.")
