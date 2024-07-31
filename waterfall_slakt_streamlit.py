@@ -68,8 +68,16 @@ def hent_uke_dager(år, uke_nummer):
 def main():
     st.title("Produksjonsanalyse")
     
+    fisk = "fisk"
+    pa = " (på slakt)"
+
     # Velg type analyse
     sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
+    if sheet_type == "filet":
+        fisk = "fileter"
+        pa = ""
+
+
     uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
     analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Gjennomsnitt for en uke"])
     oee_100 = 150 if sheet_type == "slakt" else 25
