@@ -70,7 +70,7 @@ def main():
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
     
     # Filopplastingsseksjon
-    uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
+    uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input{sheet_type}'-ark).", type=["xlsx"])
     
     if uploaded_file is None:
         st.warning("Vennligst last opp en Excel-fil for å fortsette.")
