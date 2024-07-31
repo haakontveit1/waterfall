@@ -12,31 +12,41 @@ import matplotlib.pyplot as plt
 import os
 import streamlit as st
 
-def les_data(uploaded_file=None):
+def les_data(sheet_type, uploaded_file=None):
     if uploaded_file is not None:
-        # Les data fra opplastet Excel-fil
         df = pd.read_excel(uploaded_file, header=2)
     else:
-        # Få stien til den katalogen som inneholder dette skriptet
         script_dir = os.path.dirname(os.path.realpath(__file__))
-        # Bygg stien til Excel-filen
-        file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
-        # Les data fra Excel-filen
+        if sheet_type == "slakt":
+            file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
+        elif sheet_type == "filet":
+            file_path = os.path.join(script_dir, "excelark", "inputfilet2907.xlsx")
         df = pd.read_excel(file_path, header=2)
     return df
 
-def beregn_stopptid(row):
-    stopptid = (
-        row.iloc[27] + row.iloc[28] + row.iloc[29] + row.iloc[30] +
-        (row.iloc[34] + row.iloc[35] + row.iloc[36] + row.iloc[37] + row.iloc[38] + row.iloc[39]) / 6 +
-        row.iloc[40] + row.iloc[41] + row.iloc[42] + row.iloc[43] + row.iloc[44] + row.iloc[45] + row.iloc[46] + row.iloc[47] + row.iloc[48] + row.iloc[49] + row.iloc[50]
-    )
+def beregn_stopptid(row, sheet_type):
+    if sheet_type == "slakt":
+        stopptid = (
+            row.iloc[27] + row.iloc[28] + row.iloc[29] + row.iloc[30] +
+            (row.iloc[34] + row.iloc[35] + row.iloc[36] + row.iloc[37] + row.iloc[38] + row.iloc[39]) / 6 +
+            row.iloc[40] + row.iloc[41] + row.iloc[42] + row.iloc[43] + row.iloc[44] + row.iloc[45] + row.iloc[46] + row.iloc[47] + row.iloc[48] + row.iloc[49] + row.iloc[50]
+        )
+    elif sheet_type == "filet":
+        stopptid = (
+            row.iloc[32] + row.iloc[33] + row.iloc[34] + row.iloc[35] + row.iloc[36] + row.iloc[37] + row.iloc[38] + row.iloc[39] +
+            row.iloc[40] + row.iloc[41] + row.iloc[42] + row.iloc[43] + row.iloc[44] + row.iloc[45] + row.iloc[49] + row.iloc[50] + row.iloc[51]
+        )
     return stopptid
 
-def beregn_faktiskproduksjon(row):
-    arbeidstimer = (datetime.strptime(str(row.iloc[3]), "%H:%M:%S") - datetime.strptime(str(row.iloc[2]), "%H:%M:%S")).seconds / 3600
-    arbeidstimer = arbeidstimer * 60
-    antall_fisk = row.iloc[4]
+def beregn_faktiskproduksjon(row, sheet_type):
+    if sheet_type == "slakt":
+        arbeidstimer = (datetime.strptime(str(row.iloc[3]), "%H:%M:%S") - datetime.strptime(str(row.iloc[2]), "%H:%M:%S")).seconds / 3600
+        arbeidstimer = arbeidstimer * 60
+        antall_fisk = row.iloc[4]
+    elif sheet_type == "filet":
+        arbeidstimer = (datetime.strptime(str(row.iloc[7]), "%H:%M:%S") - datetime.strptime(str(row.iloc[6]), "%H:%M:%S")).seconds / 3600
+        arbeidstimer = arbeidstimer * 60
+        antall_fisk = row.iloc[12]
     return arbeidstimer, antall_fisk
 
 def velg_dato():
@@ -47,21 +57,19 @@ def velg_dato():
     valgt_dato = datetime(år, maaned, dag)
     return valgt_dato
 
-
 def main():
     st.title("Produksjonsanalyse")
-    oee_100 = 150
-    stiplet_hoeyde = 120
-
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    # Bygg stien til Excel-file
-    navn = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
-
+    
+    # Velg type ark
+    sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
+    oee_100 = 150 if sheet_type == "slakt" else 25
+    stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
+    
     # Filopplastingsseksjon
-    uploaded_file = st.file_uploader(f'Velg en Excel-fil (må være et "input"-ark, eks inputslakt, inputfilet). Dersom du ikke laster opp noe, brukes det nyeste opplastede excelarket: {navn}', type=["xlsx"])
+    uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
     
     # Last inn data enten fra opplastet fil eller standard fil
-    df = les_data(uploaded_file)
+    df = les_data(sheet_type, uploaded_file)
     
     if df is None or df.empty:
         st.warning("Ingen data tilgjengelig. Last opp en gyldig Excel-fil.")
@@ -89,11 +97,11 @@ def main():
     if valgt_dato_enkel in df['Dato'].values:
         row = df[df['Dato'] == valgt_dato_enkel].iloc[0]
 
-        stopptid = beregn_stopptid(row)
+        stopptid = beregn_stopptid(row, sheet_type)
         stopptid_impact = stopptid * oee_100
         stopptid_takt = round(stopptid_impact / 60 / 8, 2)
         
-        arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row)
+        arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
         
         st.write(f'OEE 100%: {oee_100}')
         st.write(f'Total stopptid: {round(stopptid, 2)}')
@@ -138,7 +146,7 @@ def main():
         ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
 
         ax.set_ylabel('Produksjonsverdi')
-        ax.set_title(f'Produksjon for {valgt_dato_enkel}')
+        ax.set_title(f'Produksjon for {valgt_dato_enkel} ({sheet_type})')
         st.pyplot(fig)
 
     else:
@@ -146,4 +154,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
