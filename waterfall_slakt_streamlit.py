@@ -125,8 +125,8 @@ def main():
             return
         
         # Define the width for alignment
-        label_width = 150  # Adjust this value based on your label lengths
-        value_width = 10  # Adjust this value based on your value lengths
+        label_width = 70  # Adjust this value based on your label lengths
+        value_width = 70  # Adjust this value based on your value lengths
 
         # Format the output with padding
         st.write(f'OEE 100%:'.ljust(label_width) + f'{oee_100:<{value_width}} fisk/minutt')
