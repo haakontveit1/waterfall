@@ -41,9 +41,9 @@ def beregn_faktiskproduksjon(row, sheet_type):
             arbeidstimer = (datetime.strptime(str(row.iloc[7]), "%H:%M:%S") - datetime.strptime(str(row.iloc[6]), "%H:%M:%S")).seconds / 3600
             arbeidstimer = arbeidstimer * 60
             antall_fisk = row.iloc[12]
+        return arbeidstimer, antall_fisk
     except:
         print("Ikke overensstemmelse mellom valgt ")
-    return arbeidstimer, antall_fisk
 
 def velg_dato():
     år = st.number_input("Tast inn året du ønsker å sjekke:", min_value=2024, max_value=datetime.now().year)
