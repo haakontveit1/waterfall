@@ -141,7 +141,7 @@ def main():
             cum_values = np.cumsum([0] + values).tolist()
             value_starts = cum_values[:-1]
 
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(10, 6), dpi=100)  # Larger figure size and higher DPI for clarity
             colors = ['blue', 'red', 'orange']
 
             for i in range(len(stages)):
@@ -157,8 +157,8 @@ def main():
             ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
             ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
 
-            ax.set_ylabel(f'Antall fisk produsert per minutt')
-            ax.set_title(f'Antall fisk produsert per minutt {valgt_dato.strftime("%d.%m.%Y")}')
+            ax.set_ylabel(f'Antall {fisk} produsert per minutt')
+            ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato.strftime("%d.%m.%Y")}{pa}')
             st.pyplot(fig)
 
         else:
@@ -171,7 +171,7 @@ def main():
                 row = df[df['Dato'] == dag_enkel].iloc[0]
                 stopptid = beregn_stopptid(row, sheet_type)
                 arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
-                if stopptid is None or arbeidstimer is None or antall_fisk is None:
+                if stopptid is None or arbeidstimer is None eller antall_fisk er None:
                     st.error(f"Kan ikke beregne verdier for {dag.strftime('%d.%m.%Y')}. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                     return
                 daglig_data.append((dag, stopptid, arbeidstimer, antall_fisk))
@@ -181,7 +181,7 @@ def main():
             return
 
         # Plotting for each day
-        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10), dpi=100)  # Increase figure size and DPI
         for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
             ax = axes.flatten()[i]
             stopptid_impact = stopptid * oee_100
