@@ -70,7 +70,7 @@ def main():
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
     
     # Filopplastingsseksjon
-    uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input{sheet_type}'-ark).", type=["xlsx"])
+    uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
     
     if uploaded_file is None:
         st.warning("Vennligst last opp en Excel-fil for å fortsette.")
@@ -94,7 +94,8 @@ def main():
         return
     
     # Sjekk om valgt dato finnes i første kolonne
-    st.write(f"Valgt dato: {valgt_dato.date()}")
+    valgt_dato_str = valgt_dato.strftime("%d.%m.%Y")  # Konverterer til ønsket format
+    st.write(f"Valgt dato: {valgt_dato_str}")
     st.write("----------------------------------")
     st.write("Statistikk")
     
@@ -213,7 +214,7 @@ def main():
             fisk = "fileter"
 
         ax.set_ylabel(f'Antall {fisk} produsert per minutt')
-        ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato_enkel} (på {sheet_type})')
+        ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato_str} (på {sheet_type})')
         st.pyplot(fig)
 
     else:
