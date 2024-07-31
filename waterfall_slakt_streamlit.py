@@ -210,11 +210,13 @@ def main():
         ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
 
         fisk = "fisk"
+        pa = "på slakt"
         if sheet_type == "filet":
             fisk = "fileter"
+            pa = ""
 
         ax.set_ylabel(f'Antall {fisk} produsert per minutt')
-        ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato_str} (på {sheet_type})')
+        ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato_str} ({pa})')
         st.pyplot(fig)
 
     else:
