@@ -169,8 +169,8 @@ def main():
         </table>
         """
 
-# Display the output in Streamlit using st.markdown
-st.markdown(output_html, unsafe_allow_html=True)
+        # Display the output in Streamlit using st.markdown
+        st.markdown(output_html, unsafe_allow_html=True)
 
 
         # Data for waterfall grafen
