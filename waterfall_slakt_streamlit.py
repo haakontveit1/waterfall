@@ -171,7 +171,7 @@ def main():
                 row = df[df['Dato'] == dag_enkel].iloc[0]
                 stopptid = beregn_stopptid(row, sheet_type)
                 arbeidstimer, antall_fisk = beregn_faktiskproduksjon(row, sheet_type)
-                if stopptid is None or arbeidstimer is None or antall_fisk er None:
+                if stopptid is None or arbeidstimer is None or antall_fisk is None:
                     st.error(f"Kan ikke beregne verdier for {dag.strftime('%d.%m.%Y')}. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                     return
                 daglig_data.append((dag, stopptid, arbeidstimer, antall_fisk))
