@@ -13,7 +13,8 @@ import os
 import streamlit as st
 
 def les_data(uploaded_file=None):
-    filepath = 0
+    # Bygg stien til Excel-filen
+    file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
     
     if uploaded_file is not None:
         # Les data fra opplastet Excel-fil
@@ -22,7 +23,6 @@ def les_data(uploaded_file=None):
         # Få stien til den katalogen som inneholder dette skriptet
         script_dir = os.path.dirname(os.path.realpath(__file__))
         # Bygg stien til Excel-filen
-        file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
         # Les data fra Excel-filen
         df = pd.read_excel(file_path, header=2)
     return df, filepath
