@@ -44,7 +44,8 @@ def beregn_faktiskproduksjon(row, sheet_type):
         return arbeidstimer, antall_fisk
     except:
         print("Ikke overensstemmelse mellom valgt ")
-        return arbeidstimer, antall_fisk = 0
+        arbeidstimer, antal_fisk = 0
+        return arbeidstimer, antall_fisk
 
 def velg_dato():
     år = st.number_input("Tast inn året du ønsker å sjekke:", min_value=2024, max_value=datetime.now().year)
