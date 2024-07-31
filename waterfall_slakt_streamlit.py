@@ -149,7 +149,7 @@ def main():
             <td style="text-align:right; width:30%;">{stopptid_takt} fisk/minutt</td>
         </tr>
         </table>
-        <br><br>  <!-- Tomme linjer for å skille seksjonene -->
+        <br>  <!-- Tomme linjer for å skille seksjonene -->
         <table style="width:100%; border-spacing: 0;">
         <tr>
             <td style="text-align:left; width:70%; padding-right: 10px;">Arbeitstimer:</td>
@@ -164,7 +164,7 @@ def main():
             <td style="text-align:right; width:30%;">{round(stopptid_impact, 2)} fisk</td>
         </tr>
         </table>
-        <br><br>
+        <br>
         <table style="width:100%; border-spacing: 0;">
         <tr>
             <td style="text-align:left; width:70%; padding-right: 10px;">Annet tap (unoterte feil, operatørhastighet etc):</td>
