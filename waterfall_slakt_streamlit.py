@@ -67,7 +67,7 @@ def hent_uke_dager(år, uke_nummer):
 
 def main():
     st.title("Produksjonsanalyse")
-    
+
     fisk = "fisk"
     pa = " (på slakt)"
 
@@ -77,9 +77,10 @@ def main():
         fisk = "fileter"
         pa = ""
 
-
     uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
-    analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Gjennomsnitt for en uke"])
+    
+    # Velg type analyse
+    analyse_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
     
@@ -134,13 +135,32 @@ def main():
             annet = round(annet, 2)
             
             # Plotting single day data
+            stages = ['100% OEE', 'Stopptid', 'Annet']
+            values = [oee_100, -stopptid_takt, -annet]
+
+            cum_values = np.cumsum([0] + values).tolist()
+            value_starts = cum_values[:-1]
+
             fig, ax = plt.subplots()
-            ax.bar(['100% OEE', 'Stopptid', 'Annet'], [oee_100, -stopptid_takt, -annet], color=['blue', 'red', 'orange'])
+            colors = ['blue', 'red', 'orange']
+
+            for i in range(len(stages)):
+                ax.bar(stages[i], values[i], bottom=value_starts[i], color=colors[i], edgecolor='black')
+
             ax.bar('Takttid', faktisk_takt, bottom=0, color='green', edgecolor='black')
             ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
-            ax.set_ylabel(f'Antall {fisk} produsert per minutt')
-            ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato.strftime("%d.%m.%Y")}{pa}')
+
+            for i in range(len(stages)):
+                y_pos = value_starts[i] + values[i] / 2
+                ax.text(stages[i], y_pos, f'{values[i]}', ha='center', va='center', color='white', fontweight='bold')
+
+            ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
+            ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
+
+            ax.set_ylabel(f'Antall fisk produsert per minutt')
+            ax.set_title(f'Antall fisk produsert per minutt {valgt_dato.strftime("%d.%m.%Y")}')
             st.pyplot(fig)
+
         else:
             st.warning("Datoen du valgte finnes ikke i input-arket. Dette er enten fordi du tastet inn en ugyldig dato eller fordi datoen ikke hadde noen produksjon (eks helg).")
     else:
@@ -171,9 +191,27 @@ def main():
             annet = oee_100 - kjente_faktorer - faktisk_takt
             annet = round(annet, 2)
             
-            ax.bar(['100% OEE', 'Stopptid', 'Annet'], [oee_100, -stopptid_takt, -annet], color=['blue', 'red', 'orange'])
+            stages = ['100% OEE', 'Stopptid', 'Annet']
+            values = [oee_100, -stopptid_takt, -annet]
+
+            cum_values = np.cumsum([0] + values).tolist()
+            value_starts = cum_values[:-1]
+
+            colors = ['blue', 'red', 'orange']
+
+            for i in range(len(stages)):
+                ax.bar(stages[i], values[i], bottom=value_starts[i], color=colors[i], edgecolor='black')
+
             ax.bar('Takttid', faktisk_takt, bottom=0, color='green', edgecolor='black')
             ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
+
+            for i in range(len(stages)):
+                y_pos = value_starts[i] + values[i] / 2
+                ax.text(stages[i], y_pos, f'{values[i]}', ha='center', va='center', color='white', fontweight='bold')
+
+            ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
+            ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
+
             ax.set_title(f'{dag.strftime("%d.%m.%Y")}', fontsize=10)
 
         # Plotting weekly average data
@@ -186,11 +224,27 @@ def main():
         avg_kjente_faktorer = round(avg_stopptid_takt, 2)
         avg_annet = oee_100 - avg_kjente_faktorer - avg_faktisk_takt
         avg_annet = round(avg_annet, 2)
-        
+
         ax = axes.flatten()[-1]
-        ax.bar(['100% OEE', 'Stopptid', 'Annet'], [oee_100, -avg_stopptid_takt, -avg_annet], color=['blue', 'red', 'orange'])
+        stages = ['100% OEE', 'Stopptid', 'Annet']
+        values = [oee_100, -avg_stopptid_takt, -avg_annet]
+
+        cum_values = np.cumsum([0] + values).tolist()
+        value_starts = cum_values[:-1]
+
+        for i in range(len(stages)):
+            ax.bar(stages[i], values[i], bottom=value_starts[i], color=colors[i], edgecolor='black')
+
         ax.bar('Takttid', avg_faktisk_takt, bottom=0, color='green', edgecolor='black')
         ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
+
+        for i in range(len(stages)):
+            y_pos = value_starts[i] + values[i] / 2
+            ax.text(stages[i], y_pos, f'{values[i]}', ha='center', va='center', color='white', fontweight='bold')
+
+        ax.text('Takttid', avg_faktisk_takt / 2, f'{avg_faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
+        ax.text('Takttid',avg_faktisk_takt + (stiplet_hoeyde - avg_faktisk_takt) / 2, f'{round(stiplet_hoeyde - avg_faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
+
         ax.set_title(f'Ukesnitt {år}-W{uke_nummer}', fontsize=10)
 
         plt.tight_layout()
