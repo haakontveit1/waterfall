@@ -26,15 +26,14 @@ def les_data(sheet_type, uploaded_file=None):
 
 def beregn_stopptid(row, sheet_type):
     if sheet_type == "slakt":
+        # Use .fillna(0) to replace NaN values with 0
         stopptid = (
-            row.iloc[27] + row.iloc[28] + row.iloc[29] + row.iloc[30] +
-            (row.iloc[34] + row.iloc[35] + row.iloc[36] + row.iloc[37] + row.iloc[38] + row.iloc[39]) / 6 +
-            row.iloc[40] + row.iloc[41] + row.iloc[42] + row.iloc[43] + row.iloc[44] + row.iloc[45] + row.iloc[46] + row.iloc[47] + row.iloc[48] + row.iloc[49] + row.iloc[50]
+            row.iloc[27:51].fillna(0).sum()  # AB til AE (kolonneindekser 27-30)
         )
     elif sheet_type == "filet":
+        # Use .fillna(0) to replace NaN values with 0
         stopptid = (
-            row.iloc[32] + row.iloc[33] + row.iloc[34] + row.iloc[35] + row.iloc[36] + row.iloc[37] + row.iloc[38] + row.iloc[39] +
-            row.iloc[40] + row.iloc[41] + row.iloc[42] + row.iloc[43] + row.iloc[44] + row.iloc[45] + row.iloc[49] + row.iloc[50] + row.iloc[51]
+            row.iloc[32:52].fillna(0).sum()  # AI til AN (kolonneindekser 32-39)
         )
     return stopptid
 
