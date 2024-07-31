@@ -28,12 +28,15 @@ def beregn_stopptid(row, sheet_type):
     if sheet_type == "slakt":
         # Use .fillna(0) to replace NaN values with 0
         stopptid = (
-            row.iloc[27:51].fillna(0).sum()  # AB til AE (kolonneindekser 27-30)
+            row.iloc[27:31].fillna(0).sum() +  # AB til AE (kolonneindekser 27-30)
+            row.iloc[34:40].fillna(0).sum() / 6 +  # AI til AN (kolonneindekser 34-39)
+            row.iloc[40:51].fillna(0).sum()  # AO til AY (kolonneindekser 40-50)
         )
     elif sheet_type == "filet":
         # Use .fillna(0) to replace NaN values with 0
         stopptid = (
-            row.iloc[32:52].fillna(0).sum()  # AI til AN (kolonneindekser 32-39)
+            row.iloc[32:40].fillna(0).sum() +  # AI til AN (kolonneindekser 32-39)
+            row.iloc[40:52].fillna(0).sum()  # AO til BA (kolonneindekser 40-51)
         )
     return stopptid
 
