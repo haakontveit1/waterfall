@@ -45,6 +45,7 @@ def beregn_faktiskproduksjon(row, sheet_type):
     except:
         print("Ikke overensstemmelse mellom valgt ")
         arbeidstimer, antal_fisk = 0
+        print("hei")
         return arbeidstimer, antall_fisk
 
 def velg_dato():
