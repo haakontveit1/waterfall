@@ -23,7 +23,7 @@ def les_data(uploaded_file=None):
         file_path = os.path.join(script_dir, "excelark", "inputslakt2907.xlsx")
         # Les data fra Excel-filen
         df = pd.read_excel(file_path, header=2)
-    return df
+    return df, filepath
 
 def beregn_stopptid(row):
     stopptid = (
@@ -52,12 +52,13 @@ def main():
     st.title("Produksjonsanalyse")
     oee_100 = 150
     stiplet_hoeyde = 120
+    navn = les_data()[1] 
 
     # Filopplastingsseksjon
-    uploaded_file = st.file_uploader(f'Velg en Excel-fil (må være et "input"-ark, eks inputslakt, inputfilet). Dersom du ikke laster opp noe, brukes det nyeste opplastede excelarket: {les_data()}', type=["xlsx"])
+    uploaded_file = st.file_uploader(f'Velg en Excel-fil (må være et "input"-ark, eks inputslakt, inputfilet). Dersom du ikke laster opp noe, brukes det nyeste opplastede excelarket: {navn}', type=["xlsx"])
     
     # Last inn data enten fra opplastet fil eller standard fil
-    df = les_data(uploaded_file)
+    df = les_data(uploaded_file)[0]
     
     if df is None or df.empty:
         st.warning("Ingen data tilgjengelig. Last opp en gyldig Excel-fil.")
