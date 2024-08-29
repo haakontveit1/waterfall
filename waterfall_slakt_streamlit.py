@@ -30,8 +30,7 @@ def beregn_stopptid(row, sheet_type):
             )
         elif sheet_type == "filet":
             stopptid = (
-                row.iloc[32:40].fillna(0).sum() +
-                row.iloc[40:52].fillna(0).sum()
+                row.iloc[32:52].fillna(0).sum()
             )
         return stopptid
     except Exception as e:
