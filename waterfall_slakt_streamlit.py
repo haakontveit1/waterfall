@@ -62,8 +62,16 @@ def velg_dato():
     return valgt_dato
 
 def hent_uke_dager(år, uke_nummer):
-    start_dato = datetime.strptime(f'{år}-W{uke_nummer-1}-1', "%Y-W%W-%w")
-    return [start_dato + timedelta(days=i) for i in range(5)]  # Returner mandag-fredag
+    # Find the Thursday of the previous week
+    torsdag_forrige_uke = datetime.strptime(f'{år}-W{uke_nummer-1}-4', "%Y-W%W-%w")
+    
+    # Collect days: Thursday and Friday from the previous week, and Monday to Wednesday from the current week
+    dager = [torsdag_forrige_uke + timedelta(days=i) for i in range(2)]  # Thursday and Friday
+    mandag_naavaerende_uke = datetime.strptime(f'{år}-W{uke_nummer}-1', "%Y-W%W-%w")
+    dager += [mandag_naavaerende_uke + timedelta(days=i) for i in range(3)]  # Monday, Tuesday, Wednesday
+    
+    return dager
+
 
 def main():
     st.title("Produksjonsanalyse")
