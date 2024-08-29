@@ -188,6 +188,11 @@ def main():
             st.warning("Ingen gyldige data funnet for den valgte uken.")
             return
     
+        # Debug: Show daily data
+        st.write("### Daglig Data:")
+        for day, stopptid, arbeidstimer, antall_fisk in daglig_data:
+            st.write(f"{day.strftime('%d.%m.%Y')}: Stopptid = {stopptid}, Arbeidstimer = {arbeidstimer}, Antall fisk = {antall_fisk}")
+    
         # Plotting for each day (existing code)
         fig, axes = plt.subplots(6, 1, figsize=(10, 30), dpi=100)  # Juster figurstørrelse og DPI
         for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
@@ -227,12 +232,25 @@ def main():
             avg_stopptid = np.mean([data[1] for data in daglig_data])
             avg_arbeidstimer = np.mean([data[2] for data in daglig_data])
             avg_antall_fisk = np.mean([data[3] for data in daglig_data])
+            
+            # Debug: Show average calculation steps
+            st.write("### Ukesnitt Beregning:")
+            st.write(f"Gjennomsnittlig stopptid: {avg_stopptid}")
+            st.write(f"Gjennomsnittlig arbeidstimer: {avg_arbeidstimer}")
+            st.write(f"Gjennomsnittlig antall fisk: {avg_antall_fisk}")
+    
             avg_stopptid_impact = avg_stopptid * oee_100
             avg_stopptid_takt = round(avg_stopptid_impact / 60 / 8, 2)
             avg_faktisk_takt = round(avg_antall_fisk / avg_arbeidstimer, 2)
             avg_kjente_faktorer = round(avg_stopptid_takt, 2)
             avg_annet = oee_100 - avg_kjente_faktorer - avg_faktisk_takt
             avg_annet = round(avg_annet, 2)
+    
+            # Debug: Show calculated average values
+            st.write(f"Gjennomsnittlig stopptid takt: {avg_stopptid_takt}")
+            st.write(f"Gjennomsnittlig faktisk takt: {avg_faktisk_takt}")
+            st.write(f"Gjennomsnittlig kjente faktorer: {avg_kjente_faktorer}")
+            st.write(f"Gjennomsnittlig annet: {avg_annet}")
     
             # Plotting the average data for the week
             ax = axes[-1]
@@ -262,6 +280,7 @@ def main():
             plt.tight_layout()
             st.pyplot(fig)
     
+        
 
 if __name__ == "__main__":
     main()
