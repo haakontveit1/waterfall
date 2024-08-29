@@ -33,8 +33,6 @@ def beregn_stopptid(row, sheet_type):
                 row.iloc[32:52].fillna(0).sum()
             )
         st.write(stopptid)
-        st.write(oee_100)
-        st.write(arbeidstimer)
         return stopptid
     except Exception as e:
         st.error(f"Feil ved beregning av stopptid: {e}")
@@ -200,7 +198,7 @@ def main():
         for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
             ax = axes[i]
             stopptid_impact = stopptid * oee_100
-            print(stopptid)
+            st.write(stopptid)
             stopptid_takt = round(stopptid_impact / 60 / 8, 2)
             faktisk_takt = round(antall_fisk / arbeidstimer, 2)
             kjente_faktorer = round(stopptid_takt, 2)
