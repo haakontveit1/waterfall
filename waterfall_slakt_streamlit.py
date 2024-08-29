@@ -183,12 +183,12 @@ def main():
                     st.error(f"Kan ikke beregne verdier for {dag.strftime('%d.%m.%Y')}. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                     return
                 daglig_data.append((dag, stopptid, arbeidstimer, antall_fisk))
-
+    
         if not daglig_data:
             st.warning("Ingen gyldige data funnet for den valgte uken.")
             return
-
-        # Plotting for each day
+    
+        # Plotting for each day (existing code)
         fig, axes = plt.subplots(6, 1, figsize=(10, 30), dpi=100)  # Juster figurstørrelse og DPI
         for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
             ax = axes[i]
@@ -201,62 +201,67 @@ def main():
             
             stages = ['100% OEE', 'Stopptid', 'Annet']
             values = [oee_100, -stopptid_takt, -annet]
-
+    
             cum_values = np.cumsum([0] + values).tolist()
             value_starts = cum_values[:-1]
-
+    
             colors = ['blue', 'red', 'orange']
-
+    
             for j in range(len(stages)):
                 ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
-
+    
             ax.bar('Takttid', faktisk_takt, bottom=0, color='green', edgecolor='black')
             ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
-
+    
             for j in range(len(stages)):
                 y_pos = value_starts[j] + values[j] / 2
                 ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
-
+    
             ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
             ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
-
+    
             ax.set_title(f'{dag.strftime("%d.%m.%Y")}', fontsize=10)
-
-        # Plotting weekly average data
-        avg_stopptid = np.mean([data[1] for data in daglig_data])
-        avg_arbeidstimer = np.mean([data[2] for data in daglig_data])
-        avg_antall_fisk = np.mean([data[3] for data in daglig_data])
-        avg_stopptid_impact = avg_stopptid * oee_100
-        avg_stopptid_takt = round(avg_stopptid_impact / 60 / 8, 2)
-        avg_faktisk_takt = round(avg_antall_fisk / avg_arbeidstimer, 2)
-        avg_kjente_faktorer = round(avg_stopptid_takt, 2)
-        avg_annet = oee_100 - avg_kjente_faktorer - avg_faktisk_takt
-        avg_annet = round(avg_annet, 2)
-
-        ax = axes[-1]
-        stages = ['100% OEE', 'Stopptid', 'Annet']
-        values = [oee_100, -avg_stopptid_takt, -avg_annet]
-
-        cum_values = np.cumsum([0] + values).tolist()
-        value_starts = cum_values[:-1]
-
-        for j in range(len(stages)):
-            ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
-
-        ax.bar('Takttid', avg_faktisk_takt, bottom=0, color='green', edgecolor='black')
-        ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
-
-        for j in range(len(stages)):
-            y_pos = value_starts[j] + values[j] / 2
-            ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
-
-        ax.text('Takttid', avg_faktisk_takt / 2, f'{avg_faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
-        ax.text('Takttid',avg_faktisk_takt + (stiplet_hoeyde - avg_faktisk_takt) / 2, f'{round(stiplet_hoeyde - avg_faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
-
-        ax.set_title(f'Ukesnitt {year}-W{week_number}', fontsize=10)
-
-        plt.tight_layout()
-        st.pyplot(fig)
+    
+        # Updated weekly average calculation
+        if daglig_data:
+            avg_stopptid = np.mean([data[1] for data in daglig_data])
+            avg_arbeidstimer = np.mean([data[2] for data in daglig_data])
+            avg_antall_fisk = np.mean([data[3] for data in daglig_data])
+            avg_stopptid_impact = avg_stopptid * oee_100
+            avg_stopptid_takt = round(avg_stopptid_impact / 60 / 8, 2)
+            avg_faktisk_takt = round(avg_antall_fisk / avg_arbeidstimer, 2)
+            avg_kjente_faktorer = round(avg_stopptid_takt, 2)
+            avg_annet = oee_100 - avg_kjente_faktorer - avg_faktisk_takt
+            avg_annet = round(avg_annet, 2)
+    
+            # Plotting the average data for the week
+            ax = axes[-1]
+            stages = ['100% OEE', 'Stopptid', 'Annet']
+            values = [oee_100, -avg_stopptid_takt, -avg_annet]
+    
+            cum_values = np.cumsum([0] + values).tolist()
+            value_starts = cum_values[:-1]
+    
+            colors = ['blue', 'red', 'orange']
+    
+            for j in range(len(stages)):
+                ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
+    
+            ax.bar('Takttid', avg_faktisk_takt, bottom=0, color='green', edgecolor='black')
+            ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
+    
+            for j in range(len(stages)):
+                y_pos = value_starts[j] + values[j] / 2
+                ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
+    
+            ax.text('Takttid', avg_faktisk_takt / 2, f'{avg_faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
+            ax.text('Takttid', avg_faktisk_takt + (stiplet_hoeyde - avg_faktisk_takt) / 2, f'{round(stiplet_hoeyde - avg_faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
+    
+            ax.set_title(f'Ukesnitt {year}-W{week_number} (Torsdag til Onsdag)', fontsize=10)
+    
+            plt.tight_layout()
+            st.pyplot(fig)
+    
 
 if __name__ == "__main__":
     main()
