@@ -137,7 +137,7 @@ def main():
             
             stopptid_impact = stopptid * oee_100
             st.write(arbeidstimer)
-            stopptid_takt = round(stopptid_impact / 60 / arbeidstimer, 2)
+            stopptid_takt = round(stopptid_impact / arbeidstimer, 2)
             faktisk_takt = round(antall_fisk / arbeidstimer, 2)
             kjente_faktorer = round(stopptid_takt, 2)
             annet = oee_100 - kjente_faktorer - faktisk_takt
