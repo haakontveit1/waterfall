@@ -32,6 +32,7 @@ def beregn_stopptid(row, sheet_type):
             stopptid = (
                 row.iloc[32:52].fillna(0).sum()
             )
+        st.write(stopptid)
         return stopptid
     except Exception as e:
         st.error(f"Feil ved beregning av stopptid: {e}")
