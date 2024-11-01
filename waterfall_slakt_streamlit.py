@@ -195,11 +195,11 @@ def main():
             st.write(f"{day.strftime('%d.%m.%Y')}: Stopptid = {stopptid}, Arbeidstimer = {arbeidstimer}, Antall fisk = {antall_fisk}")
     
         # Plotting for each day (existing code)
-        fig, axes = plt.subplots(6, 1, figsize=(10, 30), dpi=100)  # Juster figurstørrelse og DPI
+        
+        # Instead of creating a single figure with subplots, generate each plot individually for copying
+
         for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
-            ax = axes[i]
             stopptid_impact = stopptid * oee_100
-            st.write(stopptid)
             stopptid_takt = round(stopptid_impact / arbeidstimer, 2)
             faktisk_takt = round(antall_fisk / arbeidstimer, 2)
             kjente_faktorer = round(stopptid_takt, 2)
@@ -208,26 +208,34 @@ def main():
             
             stages = ['100% OEE', 'Stopptid', 'Annet']
             values = [oee_100, -stopptid_takt, -annet]
-    
+        
             cum_values = np.cumsum([0] + values).tolist()
             value_starts = cum_values[:-1]
-    
+        
             colors = ['blue', 'red', 'orange']
-    
+        
+            # Create a new figure for each day to make each graph separate
+            fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
+        
             for j in range(len(stages)):
                 ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
-    
+        
             ax.bar('Takttid', faktisk_takt, bottom=0, color='green', edgecolor='black')
             ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
-    
+        
             for j in range(len(stages)):
                 y_pos = value_starts[j] + values[j] / 2
                 ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
-    
+        
             ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
-            ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
-    
+            ax.text('Takttid', faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
+        
             ax.set_title(f'{dag.strftime("%d.%m.%Y")}', fontsize=10)
+            ax.set_ylabel(f'Antall {fisk} produsert per minutt')
+            ax.set_title(f'Antall {fisk} produsert per minutt {dag.strftime("%d.%m.%Y")}{pa}')
+        
+            st.pyplot(fig)  # Display each plot separately
+
     
         # Updated weekly average calculation
         if daglig_data:
@@ -255,32 +263,36 @@ def main():
             st.write(f"Gjennomsnittlig annet: {avg_annet}")
     
             # Plotting the average data for the week
-            ax = axes[-1]
+            # Create a new figure for the weekly average instead of using `axes[-1]`
+            fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
+            
             stages = ['100% OEE', 'Stopptid', 'Annet']
             values = [oee_100, -avg_stopptid_takt, -avg_annet]
-    
+            
             cum_values = np.cumsum([0] + values).tolist()
             value_starts = cum_values[:-1]
-    
+            
             colors = ['blue', 'red', 'orange']
-    
+            
             for j in range(len(stages)):
                 ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
-    
+            
             ax.bar('Takttid', avg_faktisk_takt, bottom=0, color='green', edgecolor='black')
             ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
-    
+            
             for j in range(len(stages)):
                 y_pos = value_starts[j] + values[j] / 2
                 ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
-    
+            
             ax.text('Takttid', avg_faktisk_takt / 2, f'{avg_faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
             ax.text('Takttid', avg_faktisk_takt + (stiplet_hoeyde - avg_faktisk_takt) / 2, f'{round(stiplet_hoeyde - avg_faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
-    
+            
             ax.set_title(f'Ukesnitt {year}-W{week_number} (Torsdag til Onsdag)', fontsize=10)
-    
-            plt.tight_layout()
+            ax.set_ylabel(f'Antall {fisk} produsert per minutt')
+            
+            # Display the weekly average plot separately
             st.pyplot(fig)
+
     
         
 
