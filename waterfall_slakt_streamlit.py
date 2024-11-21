@@ -1,24 +1,64 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul 31 08:53:23 2024
-
-@author: HåkonTveiten
-"""
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
+from openpyxl import load_workbook
+
+#fikse løsning dersom tidspunkt for slutt ikke er i riktig format
+
+
 
 def les_data(uploaded_file):
     if uploaded_file is not None:
         try:
-            df = pd.read_excel(uploaded_file, header=2)
+            # Load the data into a DataFrame (standard approach)
+            df = pd.read_excel(uploaded_file, header=2)  # Skip 2 header rows
+            
+            # Reload the file using openpyxl to extract comments
+            workbook = load_workbook(uploaded_file)
+            sheet = workbook.active
+
+            # Extract comments from the 4th column
+            comments = []
+            for idx, row in enumerate(sheet.iter_rows(min_row=3, min_col=4, max_col=4), start=0):
+                cell = row[0]
+                if cell.comment:
+                    comment_text = cell.comment.text
+                    # Extract the part of the comment after the third colon
+                    colon_count = 0
+                    extracted_text = ""
+                    for char in comment_text:
+                        if char == ":":
+                            colon_count += 1
+                        if colon_count == 3 or colon_count == 4:
+                            extracted_text += char
+                    if extracted_text:
+                        comment_text = extracted_text.strip(": ")
+                    else:
+                        comment_text = ""
+                else:
+                    comment_text = ""  # No comment
+                
+                comments.append(comment_text)
+
+            # Apply the workaround: Remove the first comment to align with DataFrame
+            aligned_comments = comments[1:] + [""]  # Shift comments to align with DataFrame rows
+
+            # Add aligned comments to the DataFrame
+            df['comments'] = aligned_comments[:len(df)]  # Ensure exact match in length
             return df
         except Exception as e:
             st.error(f"Feil ved lesing av Excel-filen: {e}")
             return None
     return None
+
+
+
+
+
+
+
 
 def beregn_stopptid(row, sheet_type):
     try:
@@ -40,18 +80,88 @@ def beregn_stopptid(row, sheet_type):
 
 def beregn_faktiskproduksjon(row, sheet_type):
     try:
-        if sheet_type == "slakt":
-            arbeidstimer = (datetime.strptime(str(row.iloc[3]), "%H:%M:%S") - datetime.strptime(str(row.iloc[2]), "%H:%M:%S")).seconds / 3600
-            arbeidstimer = arbeidstimer * 60
-            antall_fisk = row.iloc[4]
-        elif sheet_type == "filet":
-            arbeidstimer = (datetime.strptime(str(row.iloc[7]), "%H:%M:%S") - datetime.strptime(str(row.iloc[6]), "%H:%M:%S")).seconds / 3600
-            arbeidstimer = arbeidstimer * 60
-            antall_fisk = row.iloc[12]
+        # Parse start time
+        start_time = datetime.strptime(str(row.iloc[2]), "%H:%M:%S")
+        end_time_cell_value = str(row.iloc[3])
+        st.write(f"Start time: {start_time}, End time (raw): {end_time_cell_value}")
+
+        # Initialize work duration and parsed time
+        work_duration = None
+        parsed_time = None
+
+        # Handle edge cases for "23:59:00" or "00:00:00"
+        if end_time_cell_value in ["23:59:00", "00:00:00"]:
+            st.write(f"Edge case detected for end time: {end_time_cell_value}")
+
+            # Check for a comment in the 'comments' column
+            comment_text = row['comments']
+            if comment_text:
+                st.write(f"Comment found: {comment_text}")
+
+                # Extract hours and minutes from the comment
+                try:
+                    hh, mm = "", ""
+                    for char in comment_text:
+                        if char.isdigit() and len(hh) < 2:
+                            hh += char
+                        elif char.isdigit() and len(mm) < 2:
+                            mm += char
+                    if not hh or not mm:
+                        raise ValueError("Failed to extract hh:mm from the comment")
+
+                    # Convert to integers
+                    hh = int(hh)
+                    mm = int(mm)
+                    parsed_time = timedelta(hours=hh, minutes=mm)
+                    st.write(f"Parsed time from comment: {hh:02}:{mm:02} (timedelta: {parsed_time})")
+                except Exception as e:
+                    st.error(f"Could not parse time from comment: {e}")
+                    return None, None
+
+            # Calculate work duration using the parsed time
+            if parsed_time:
+                if end_time_cell_value == "23:59:00":
+                    work_duration = timedelta(minutes=1) + parsed_time + timedelta(hours=23, minutes=59)
+                    #st.write(f"23:59 Case with comment: work_duration = {work_duration}")
+                elif end_time_cell_value == "00:00:00":
+                    work_duration = parsed_time + timedelta(hours=24)
+                    #st.write(f"00:00 Case with comment: work_duration = {work_duration}")
+            else:
+                # Fallback for no comment
+                if end_time_cell_value == "23:59:00":
+                    work_duration = timedelta(hours=23, minutes=59)
+                    #st.write(f"No comment - 23:59 Case: work_duration = {work_duration}")
+                elif end_time_cell_value == "00:00:00":
+                    work_duration = timedelta(hours=24)
+                    #st.write(f"No comment - 00:00 Case: work_duration = {work_duration}")
+                    
+            # Adjust final work duration to account for the start time
+            work_duration = work_duration - (start_time - datetime.combine(start_time.date(), datetime.min.time()))
+            #st.write(f"Final adjusted work_duration (after subtracting start_time): {work_duration}")
+            #st.write(f"And the start time of the day was {start_time}")
+            #st.write(f"And the start time of the day was {datetime.combine(start_time.date(), datetime.min.time())}")
+        else:
+            # Normal case for end time
+            end_time = datetime.strptime(end_time_cell_value, "%H:%M:%S")
+            work_duration = end_time - start_time
+            #st.write(f"Normal case: work_duration = end_time - start_time = {work_duration}")
+
+        # Convert work duration to minutes
+        arbeidstimer = work_duration.total_seconds() / 60
+        #st.write(f"arbeidstimer = work_duration.total_seconds() / 60 = {arbeidstimer} minutes")
+
+        # Get fish count
+        antall_fisk = row.iloc[4] if sheet_type == "slakt" else row.iloc[12]
+        #st.write(f"antall_fisk = {antall_fisk}")
+
+        # Return results
         return arbeidstimer, antall_fisk
+
     except Exception as e:
-        st.error(f"Feil ved beregning av faktisk produksjon: {e}")
+        st.error(f"Error in production time calculation: {e}")
         return None, None
+
+
 
 def velg_dato():
     år = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
@@ -134,9 +244,7 @@ def main():
             if stopptid is None or arbeidstimer is None or antall_fisk is None:
                 st.error("Kan ikke beregne verdier. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                 return
-            
             stopptid_impact = stopptid * oee_100
-            st.write(arbeidstimer)
             stopptid_takt = round(stopptid_impact / arbeidstimer, 2)
             faktisk_takt = round(antall_fisk / arbeidstimer, 2)
             kjente_faktorer = round(stopptid_takt, 2)
@@ -160,11 +268,27 @@ def main():
             ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
 
             for i in range(len(stages)):
+                percentage = abs(values[i]) / oee_100 * 100  # Calculate percentage
                 y_pos = value_starts[i] + values[i] / 2
-                ax.text(stages[i], y_pos, f'{values[i]}', ha='center', va='center', color='white', fontweight='bold')
-
-            ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
-            ax.text('Takttid',faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
+                ax.text(
+                    stages[i], y_pos,
+                    f'{values[i]} ({percentage:.1f}%)',  # Include units and percentage
+                    ha='center', va='center', color='white', fontweight='bold'
+                )
+            
+            ax.text(
+                'Takttid', faktisk_takt / 2,
+                f'{faktisk_takt} ({(faktisk_takt / oee_100 * 100):.1f}%)',  # Include units and percentage
+                ha='center', va='center', color='white', fontweight='bold'
+            )
+            
+            # Add gap value above the stippled bar
+            gap_to_80 = stiplet_hoeyde - faktisk_takt
+            ax.text(
+                'Takttid', stiplet_hoeyde + 5,  # Position above stippled bar
+                f'{round(gap_to_80, 2)} ({(gap_to_80 / oee_100 * 100):.1f}%)',  # Gap value and percentage
+                ha='center', va='bottom', color='green', fontweight='bold'
+            )
 
             ax.set_ylabel(f'Antall {fisk} produsert per minutt')
             ax.set_title(f'Antall {fisk} produsert per minutt {valgt_dato.strftime("%d.%m.%Y")}{pa}')
@@ -184,116 +308,110 @@ def main():
                     st.error(f"Kan ikke beregne verdier for {dag.strftime('%d.%m.%Y')}. Sjekk om du har valgt riktig filtype og lastet opp riktig fil.")
                     return
                 daglig_data.append((dag, stopptid, arbeidstimer, antall_fisk))
-    
+                # Plot daily graph
+                st.write(stopptid)
+                stopptid_impact = stopptid * oee_100
+                stopptid_takt = round(stopptid_impact / arbeidstimer, 2)
+                faktisk_takt = round(antall_fisk / arbeidstimer, 2)
+                kjente_faktorer = round(stopptid_takt, 2)
+                annet = oee_100 - kjente_faktorer - faktisk_takt
+                annet = round(annet, 2)
+
+                fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
+                stages = ['100% OEE', 'Stopptid', 'Annet']
+                values = [oee_100, -stopptid_takt, -annet]
+                cum_values = np.cumsum([0] + values).tolist()
+                value_starts = cum_values[:-1]
+                colors = ['blue', 'red', 'orange']
+
+                for i in range(len(stages)):
+                    ax.bar(stages[i], values[i], bottom=value_starts[i], color=colors[i], edgecolor='black')
+
+                ax.bar('Takttid', faktisk_takt, bottom=0, color='green', edgecolor='black')
+                ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
+
+                for i in range(len(stages)):
+                    percentage = abs(values[i]) / oee_100 * 100
+                    y_pos = value_starts[i] + values[i] / 2
+                    ax.text(
+                        stages[i], y_pos,
+                        f'{values[i]} ({percentage:.1f}%)',
+                        ha='center', va='center', color='white', fontweight='bold'
+                    )
+
+                ax.text(
+                    'Takttid', faktisk_takt / 2,
+                    f'{faktisk_takt} ({(faktisk_takt / oee_100 * 100):.1f}%)',
+                    ha='center', va='center', color='white', fontweight='bold'
+                )
+
+                gap_to_80 = stiplet_hoeyde - faktisk_takt
+                ax.text(
+                    'Takttid', stiplet_hoeyde + 5,
+                    f'{round(gap_to_80, 2)} ({(gap_to_80 / oee_100 * 100):.1f}%)',
+                    ha='center', va='bottom', color='green', fontweight='bold'
+                )
+
+                ax.set_ylabel(f'Antall {fisk} produsert per minutt')
+                ax.set_title(f'Daglig produksjon {dag.strftime("%d.%m.%Y")}')
+                st.write(f"Totalt antall arbeidstimer: {arbeidstimer}")
+                st.pyplot(fig)
+
         if not daglig_data:
             st.warning("Ingen gyldige data funnet for den valgte uken.")
             return
-    
-        # Debug: Show daily data
-        st.write("### Daglig Data:")
-        for day, stopptid, arbeidstimer, antall_fisk in daglig_data:
-            st.write(f"{day.strftime('%d.%m.%Y')}: Stopptid = {stopptid}, Arbeidstimer = {arbeidstimer}, Antall fisk = {antall_fisk}")
-    
-        # Plotting for each day (existing code)
-        
-        # Instead of creating a single figure with subplots, generate each plot individually for copying
 
-        for i, (dag, stopptid, arbeidstimer, antall_fisk) in enumerate(daglig_data):
-            stopptid_impact = stopptid * oee_100
-            stopptid_takt = round(stopptid_impact / arbeidstimer, 2)
-            faktisk_takt = round(antall_fisk / arbeidstimer, 2)
-            kjente_faktorer = round(stopptid_takt, 2)
-            annet = oee_100 - kjente_faktorer - faktisk_takt
-            annet = round(annet, 2)
-            
-            stages = ['100% OEE', 'Stopptid', 'Annet']
-            values = [oee_100, -stopptid_takt, -annet]
-        
-            cum_values = np.cumsum([0] + values).tolist()
-            value_starts = cum_values[:-1]
-        
-            colors = ['blue', 'red', 'orange']
-        
-            # Create a new figure for each day to make each graph separate
-            fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
-        
-            for j in range(len(stages)):
-                ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
-        
-            ax.bar('Takttid', faktisk_takt, bottom=0, color='green', edgecolor='black')
-            ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
-        
-            for j in range(len(stages)):
-                y_pos = value_starts[j] + values[j] / 2
-                ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
-        
-            ax.text('Takttid', faktisk_takt / 2, f'{faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
-            ax.text('Takttid', faktisk_takt + (stiplet_hoeyde - faktisk_takt) / 2, f'{round(stiplet_hoeyde - faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
-        
-            ax.set_title(f'{dag.strftime("%d.%m.%Y")}', fontsize=10)
-            ax.set_ylabel(f'Antall {fisk} produsert per minutt')
-            ax.set_title(f'Antall {fisk} produsert per minutt {dag.strftime("%d.%m.%Y")}{pa}')
-        
-            st.pyplot(fig)  # Display each plot separately
+        # Weekly averages
+        avg_stopptid = np.mean([data[1] for data in daglig_data])
+        avg_arbeidstimer = np.mean([data[2] for data in daglig_data])
+        avg_antall_fisk = np.mean([data[3] for data in daglig_data])
 
-    
-        # Updated weekly average calculation
-        if daglig_data:
-            avg_stopptid = np.mean([data[1] for data in daglig_data])
-            avg_arbeidstimer = np.mean([data[2] for data in daglig_data])
-            avg_antall_fisk = np.mean([data[3] for data in daglig_data])
-            
-            # Debug: Show average calculation steps
-            st.write("### Ukesnitt Beregning:")
-            st.write(f"Gjennomsnittlig stopptid: {avg_stopptid}")
-            st.write(f"Gjennomsnittlig arbeidstimer: {avg_arbeidstimer}")
-            st.write(f"Gjennomsnittlig antall fisk: {avg_antall_fisk}")
-    
-            avg_stopptid_impact = avg_stopptid * oee_100
-            avg_stopptid_takt = round(avg_stopptid_impact / avg_arbeidstimer, 2)
-            avg_faktisk_takt = round(avg_antall_fisk / avg_arbeidstimer, 2)
-            avg_kjente_faktorer = round(avg_stopptid_takt, 2)
-            avg_annet = oee_100 - avg_kjente_faktorer - avg_faktisk_takt
-            avg_annet = round(avg_annet, 2)
-    
-            # Debug: Show calculated average values
-            st.write(f"Gjennomsnittlig stopptid takt: {avg_stopptid_takt}")
-            st.write(f"Gjennomsnittlig faktisk takt: {avg_faktisk_takt}")
-            st.write(f"Gjennomsnittlig kjente faktorer: {avg_kjente_faktorer}")
-            st.write(f"Gjennomsnittlig annet: {avg_annet}")
-    
-            # Plotting the average data for the week
-            # Create a new figure for the weekly average instead of using `axes[-1]`
-            fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
-            
-            stages = ['100% OEE', 'Stopptid', 'Annet']
-            values = [oee_100, -avg_stopptid_takt, -avg_annet]
-            
-            cum_values = np.cumsum([0] + values).tolist()
-            value_starts = cum_values[:-1]
-            
-            colors = ['blue', 'red', 'orange']
-            
-            for j in range(len(stages)):
-                ax.bar(stages[j], values[j], bottom=value_starts[j], color=colors[j], edgecolor='black')
-            
-            ax.bar('Takttid', avg_faktisk_takt, bottom=0, color='green', edgecolor='black')
-            ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
-            
-            for j in range(len(stages)):
-                y_pos = value_starts[j] + values[j] / 2
-                ax.text(stages[j], y_pos, f'{values[j]}', ha='center', va='center', color='white', fontweight='bold')
-            
-            ax.text('Takttid', avg_faktisk_takt / 2, f'{avg_faktisk_takt}', ha='center', va='center', color='white', fontweight='bold')
-            ax.text('Takttid', avg_faktisk_takt + (stiplet_hoeyde - avg_faktisk_takt) / 2, f'{round(stiplet_hoeyde - avg_faktisk_takt, 2)}', ha='center', va='center', color='green', fontweight='bold')
-            
-            ax.set_title(f'Ukesnitt {year}-W{week_number} (Torsdag til Onsdag)', fontsize=10)
-            ax.set_ylabel(f'Antall {fisk} produsert per minutt')
-            
-            # Display the weekly average plot separately
-            st.pyplot(fig)
+        avg_stopptid_impact = avg_stopptid * oee_100
+        avg_stopptid_takt = round(avg_stopptid_impact / avg_arbeidstimer, 2)
+        avg_faktisk_takt = round(avg_antall_fisk / avg_arbeidstimer, 2)
+        avg_kjente_faktorer = round(avg_stopptid_takt, 2)
+        avg_annet = oee_100 - avg_kjente_faktorer - avg_faktisk_takt
+        avg_annet = round(avg_annet, 2)
 
-    
+        # Plot weekly average graph
+        fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
+        stages = ['100% OEE', 'Stopptid', 'Annet']
+        values = [oee_100, -avg_stopptid_takt, -avg_annet]
+        cum_values = np.cumsum([0] + values).tolist()
+        value_starts = cum_values[:-1]
+        colors = ['blue', 'red', 'orange']
+        
+        for i in range(len(stages)):
+            ax.bar(stages[i], values[i], bottom=value_starts[i], color=colors[i], edgecolor='black')
+
+        ax.bar('Takttid', avg_faktisk_takt, bottom=0, color='green', edgecolor='black')
+        ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
+
+        for i in range(len(stages)):
+            percentage = abs(values[i]) / oee_100 * 100
+            y_pos = value_starts[i] + values[i] / 2
+            ax.text(
+                stages[i], y_pos,
+                f'{values[i]} ({percentage:.1f}%)',
+                ha='center', va='center', color='white', fontweight='bold'
+            )
+
+        ax.text(
+            'Takttid', avg_faktisk_takt / 2,
+            f'{avg_faktisk_takt} ({(avg_faktisk_takt / oee_100 * 100):.1f}%)',
+            ha='center', va='center', color='white', fontweight='bold'
+        )
+
+        gap_to_80 = stiplet_hoeyde - avg_faktisk_takt
+        ax.text(
+            'Takttid', stiplet_hoeyde + 5,
+            f'{round(gap_to_80, 2)} ({(gap_to_80 / oee_100 * 100):.1f}%)',
+            ha='center', va='bottom', color='green', fontweight='bold'
+        )
+
+        ax.set_ylabel(f'Antall {fisk} produsert per minutt')
+        ax.set_title(f'Ukesnitt {year}-W{week_number}')
+        st.pyplot(fig)
         
 
 if __name__ == "__main__":
