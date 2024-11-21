@@ -5,162 +5,44 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from openpyxl import load_workbook
 
-#fikse løsning dersom tidspunkt for slutt ikke er i riktig format
 
-
-
-def les_data(uploaded_file):
+def les_data(uploaded_file, sheet_type):
     if uploaded_file is not None:
         try:
-            # Load the data into a DataFrame (standard approach)
-            df = pd.read_excel(uploaded_file, header=2)  # Skip 2 header rows
-            
-            # Reload the file using openpyxl to extract comments
-            workbook = load_workbook(uploaded_file)
-            sheet = workbook.active
+            if sheet_type == "slakt":
+                # Load data and extract comments for "slakt"
+                df = pd.read_excel(uploaded_file, header=2)
+                workbook = load_workbook(uploaded_file)
+                sheet = workbook.active
 
-            # Extract comments from the 4th column
-            comments = []
-            for idx, row in enumerate(sheet.iter_rows(min_row=3, min_col=4, max_col=4), start=0):
-                cell = row[0]
-                if cell.comment:
-                    comment_text = cell.comment.text
-                    # Extract the part of the comment after the third colon
-                    colon_count = 0
-                    extracted_text = ""
-                    for char in comment_text:
-                        if char == ":":
-                            colon_count += 1
-                        if colon_count == 3 or colon_count == 4:
-                            extracted_text += char
-                    if extracted_text:
-                        comment_text = extracted_text.strip(": ")
+                comments = []
+                for idx, row in enumerate(sheet.iter_rows(min_row=3, min_col=4, max_col=4), start=0):
+                    cell = row[0]
+                    if cell.comment:
+                        comment_text = cell.comment.text
+                        colon_count = 0
+                        hh_mm = ""
+                        for char in comment_text:
+                            if char == ":":
+                                colon_count += 1
+                            if colon_count >= 3 and char.isdigit():
+                                hh_mm += char
+                        comment_text = hh_mm.strip() if hh_mm else ""
                     else:
                         comment_text = ""
-                else:
-                    comment_text = ""  # No comment
-                
-                comments.append(comment_text)
+                    comments.append(comment_text)
 
-            # Apply the workaround: Remove the first comment to align with DataFrame
-            aligned_comments = comments[1:] + [""]  # Shift comments to align with DataFrame rows
+                aligned_comments = comments[1:] + [""]
+                df["comments"] = aligned_comments[:len(df)]
+            else:
+                # Simple load for "filet"
+                df = pd.read_excel(uploaded_file, header=2)
 
-            # Add aligned comments to the DataFrame
-            df['comments'] = aligned_comments[:len(df)]  # Ensure exact match in length
             return df
         except Exception as e:
             st.error(f"Feil ved lesing av Excel-filen: {e}")
             return None
     return None
-
-
-
-
-
-
-
-
-def beregn_stopptid(row, sheet_type):
-    try:
-        if sheet_type == "slakt":
-            stopptid = (
-                row.iloc[27:31].fillna(0).sum() +
-                row.iloc[34:40].fillna(0).sum() / 6 +
-                row.iloc[40:51].fillna(0).sum()
-            )
-        elif sheet_type == "filet":
-            stopptid = (
-                row.iloc[32:52].fillna(0).sum()
-            )
-        st.write(stopptid)
-        return stopptid
-    except Exception as e:
-        st.error(f"Feil ved beregning av stopptid: {e}")
-        return None
-
-def beregn_faktiskproduksjon(row, sheet_type):
-    try:
-        # Parse start time
-        start_time = datetime.strptime(str(row.iloc[2]), "%H:%M:%S")
-        end_time_cell_value = str(row.iloc[3])
-        st.write(f"Start time: {start_time}, End time (raw): {end_time_cell_value}")
-
-        # Initialize work duration and parsed time
-        work_duration = None
-        parsed_time = None
-
-        # Handle edge cases for "23:59:00" or "00:00:00"
-        if end_time_cell_value in ["23:59:00", "00:00:00"]:
-            st.write(f"Edge case detected for end time: {end_time_cell_value}")
-
-            # Check for a comment in the 'comments' column
-            comment_text = row['comments']
-            if comment_text:
-                st.write(f"Comment found: {comment_text}")
-
-                # Extract hours and minutes from the comment
-                try:
-                    hh, mm = "", ""
-                    for char in comment_text:
-                        if char.isdigit() and len(hh) < 2:
-                            hh += char
-                        elif char.isdigit() and len(mm) < 2:
-                            mm += char
-                    if not hh or not mm:
-                        raise ValueError("Failed to extract hh:mm from the comment")
-
-                    # Convert to integers
-                    hh = int(hh)
-                    mm = int(mm)
-                    parsed_time = timedelta(hours=hh, minutes=mm)
-                    st.write(f"Parsed time from comment: {hh:02}:{mm:02} (timedelta: {parsed_time})")
-                except Exception as e:
-                    st.error(f"Could not parse time from comment: {e}")
-                    return None, None
-
-            # Calculate work duration using the parsed time
-            if parsed_time:
-                if end_time_cell_value == "23:59:00":
-                    work_duration = timedelta(minutes=1) + parsed_time + timedelta(hours=23, minutes=59)
-                    #st.write(f"23:59 Case with comment: work_duration = {work_duration}")
-                elif end_time_cell_value == "00:00:00":
-                    work_duration = parsed_time + timedelta(hours=24)
-                    #st.write(f"00:00 Case with comment: work_duration = {work_duration}")
-            else:
-                # Fallback for no comment
-                if end_time_cell_value == "23:59:00":
-                    work_duration = timedelta(hours=23, minutes=59)
-                    #st.write(f"No comment - 23:59 Case: work_duration = {work_duration}")
-                elif end_time_cell_value == "00:00:00":
-                    work_duration = timedelta(hours=24)
-                    #st.write(f"No comment - 00:00 Case: work_duration = {work_duration}")
-                    
-            # Adjust final work duration to account for the start time
-            work_duration = work_duration - (start_time - datetime.combine(start_time.date(), datetime.min.time()))
-            #st.write(f"Final adjusted work_duration (after subtracting start_time): {work_duration}")
-            #st.write(f"And the start time of the day was {start_time}")
-            #st.write(f"And the start time of the day was {datetime.combine(start_time.date(), datetime.min.time())}")
-        else:
-            # Normal case for end time
-            end_time = datetime.strptime(end_time_cell_value, "%H:%M:%S")
-            work_duration = end_time - start_time
-            #st.write(f"Normal case: work_duration = end_time - start_time = {work_duration}")
-
-        # Convert work duration to minutes
-        arbeidstimer = work_duration.total_seconds() / 60
-        #st.write(f"arbeidstimer = work_duration.total_seconds() / 60 = {arbeidstimer} minutes")
-
-        # Get fish count
-        antall_fisk = row.iloc[4] if sheet_type == "slakt" else row.iloc[12]
-        #st.write(f"antall_fisk = {antall_fisk}")
-
-        # Return results
-        return arbeidstimer, antall_fisk
-
-    except Exception as e:
-        st.error(f"Error in production time calculation: {e}")
-        return None, None
-
 
 
 def velg_dato():
@@ -170,6 +52,7 @@ def velg_dato():
     dag = st.number_input("Velg dag (1-31):", min_value=1, max_value=31)
     valgt_dato = datetime(år, maaned, dag)
     return valgt_dato
+
 
 def hent_uke_dager(år, uke_nummer):
     # Find the Thursday of the previous week
@@ -182,39 +65,111 @@ def hent_uke_dager(år, uke_nummer):
     
     return dager
 
+def beregn_stopptid(row, sheet_type):
+    try:
+        if sheet_type == "slakt":
+            stopptid = (
+                row.iloc[27:31].fillna(0).sum() +
+                row.iloc[34:40].fillna(0).sum() / 6 +
+                row.iloc[40:51].fillna(0).sum()
+            )
+        elif sheet_type == "filet":
+            stopptid = row.iloc[32:52].fillna(0).sum()
+        return stopptid
+    except Exception as e:
+        st.error(f"Feil ved beregning av stopptid: {e}")
+        return None
+
+
+def beregn_faktiskproduksjon(row, sheet_type):
+    try:
+        if sheet_type == "slakt":
+            # Handle edge cases for "slakt"
+            start_time = datetime.strptime(str(row.iloc[2]), "%H:%M:%S")
+            end_time_cell_value = str(row.iloc[3])
+
+            if end_time_cell_value in ["23:59:00", "00:00:00"]:
+                st.write(f"Edge case detected for end time: {end_time_cell_value}")
+                comment_text = row['comments']
+
+                if comment_text:
+                    st.write(f"Comment found: {comment_text}")
+                    # Extract hh:mm from the comment
+                    try:
+                        hh = int(comment_text[:2])
+                        mm = int(comment_text[3:5])
+                        parsed_time = timedelta(hours=hh, minutes=mm)
+                        st.write(f"Parsed time from comment: {parsed_time}")
+                    except Exception as e:
+                        st.error(f"Could not parse time from comment: {e}")
+                        return None, None
+
+                    if end_time_cell_value == "23:59:00":
+                        end_time = timedelta(minutes=1) + parsed_time + timedelta(hours=23, minutes=59)
+                    else:  # "00:00:00"
+                        end_time = parsed_time + timedelta(hours=24)
+
+                    work_duration = end_time - timedelta(hours=start_time.hour, minutes=start_time.minute, seconds=start_time.second)
+                else:
+                    # No comment; fallback to default behavior
+                    end_time = datetime.strptime(end_time_cell_value, "%H:%M:%S")
+                    work_duration = end_time - start_time
+            else:
+                # Normal case
+                end_time = datetime.strptime(end_time_cell_value, "%H:%M:%S")
+                work_duration = end_time - start_time
+
+            arbeidstimer = work_duration.total_seconds() / 60
+            antall_fisk = row.iloc[4]
+
+        elif sheet_type == "filet":
+            # Simpler case for "filet"
+            start_time = datetime.strptime(str(row.iloc[6]), "%H:%M:%S")
+            end_time = datetime.strptime(str(row.iloc[7]), "%H:%M:%S")
+            work_duration = end_time - start_time
+            arbeidstimer = work_duration.total_seconds() / 60
+            antall_fisk = row.iloc[12]
+
+        # Debug: Output calculated values
+        st.write(f"Start time: {start_time}, End time: {end_time}")
+        st.write(f"Work duration: {work_duration}")
+        st.write(f"Arbeidstimer (minutes): {arbeidstimer}")
+        st.write(f"Antall fisk: {antall_fisk}")
+
+        return arbeidstimer, antall_fisk
+    except Exception as e:
+        st.error(f"Feil ved beregning av faktisk produksjon: {e}")
+        return None, None
+
+
 
 def main():
     st.title("Produksjonsanalyse")
 
     fisk = "fisk"
     pa = " (på slakt)"
-
-    # Velg type ark
     sheet_type = st.selectbox("Velg type ark:", ["slakt", "filet"])
     if sheet_type == "filet":
         fisk = "fileter"
         pa = " (på filet)"
 
     uploaded_file = st.file_uploader(f"Velg en Excel-fil (må være et 'input-{sheet_type}'-ark).", type=["xlsx"])
-    
-    # Velg type analyse
     analysis_type = st.selectbox("Velg analyse:", ["Spesifikk dato", "Hele uken"])
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
-    
+
     if analysis_type == "Spesifikk dato":
         valgt_dato = velg_dato()
     else:
         year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
         week_number = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
         week_days = hent_uke_dager(year, week_number)
-    
+
     if uploaded_file is None:
         st.warning("Vennligst last opp en Excel-fil for å fortsette.")
         return
 
-    df = les_data(uploaded_file)
-    
+    df = les_data(uploaded_file, sheet_type)
     if df is None:
         st.warning("Ingen data tilgjengelig i den opplastede filen. Vennligst last opp en gyldig Excel-fil.")
         return
@@ -268,13 +223,34 @@ def main():
             ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
 
             for i in range(len(stages)):
-                percentage = abs(values[i]) / oee_100 * 100  # Calculate percentage
-                y_pos = value_starts[i] + values[i] / 2
-                ax.text(
-                    stages[i], y_pos,
-                    f'{values[i]} ({percentage:.1f}%)',  # Include units and percentage
-                    ha='center', va='center', color='white', fontweight='bold'
-                )
+                if stages[i] == 'Stopptid':
+                    if stopptid_takt < 7:
+                        # Place the text outside the bar if the value is less than 7
+                        dynamic_offset = value_starts[i] + values[i] - 10  # Adjust `-10` for spacing
+                        ax.text(
+                            stages[i], dynamic_offset,
+                            f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                            ha='center', va='top', color='black', fontweight='bold'
+                        )
+                    else:
+                        # Place the text inside the bar if the value is greater than or equal to 7
+                        y_pos = value_starts[i] + values[i] / 2
+                        ax.text(
+                            stages[i], y_pos,
+                            f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                            ha='center', va='center', color='white', fontweight='bold'
+                        )
+                else:
+                    # Place the text inside other bars as before
+                    y_pos = value_starts[i] + values[i] / 2
+                    ax.text(
+                        stages[i], y_pos,
+                        f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                        ha='center', va='center', color='white', fontweight='bold'
+                    )
+
+
+
             
             ax.text(
                 'Takttid', faktisk_takt / 2,
@@ -331,13 +307,52 @@ def main():
                 ax.bar('Takttid', stiplet_hoeyde - faktisk_takt, bottom=faktisk_takt, color='none', edgecolor='green', hatch='//')
 
                 for i in range(len(stages)):
-                    percentage = abs(values[i]) / oee_100 * 100
-                    y_pos = value_starts[i] + values[i] / 2
-                    ax.text(
-                        stages[i], y_pos,
-                        f'{values[i]} ({percentage:.1f}%)',
-                        ha='center', va='center', color='white', fontweight='bold'
-                    )
+                    if stages[i] == 'Stopptid':
+                        if sheet_type == "slakt":
+                            if stopptid_takt < 9:
+                                # Place the text outside the bar if the value is less than 7
+                                    dynamic_offset = value_starts[i] + values[i] - 7  # Adjust `-10` for spacing
+                                    ax.text(
+                                        stages[i], dynamic_offset,
+                                        f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                                        ha='center', va='top', color='black', fontweight='bold'
+                                    )
+                            else:
+                                # Place the text inside the bar if the value is greater than or equal to 7
+                                y_pos = value_starts[i] + values[i] / 2
+                                ax.text(
+                                    stages[i], y_pos,
+                                    f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                                    ha='center', va='center', color='white', fontweight='bold'
+                                )
+                        elif sheet_type == "filet":
+                            if stopptid_takt < 1.5:
+                                # Place the text outside the bar if the value is less than 7
+                                    dynamic_offset = value_starts[i] + values[i] -1  # Adjust `-10` for spacing
+                                    ax.text(
+                                        stages[i], dynamic_offset,
+                                        f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                                        ha='center', va='top', color='black', fontweight='bold'
+                                    )
+                            else:
+                                # Place the text inside the bar if the value is greater than or equal to 7
+                                y_pos = value_starts[i] + values[i] / 2
+                                ax.text(
+                                    stages[i], y_pos,
+                                    f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                                    ha='center', va='center', color='white', fontweight='bold'
+                                )
+                    else:
+                        # Place the text inside other bars as before
+                        y_pos = value_starts[i] + values[i] / 2
+                        ax.text(
+                            stages[i], y_pos,
+                            f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                            ha='center', va='center', color='white', fontweight='bold'
+                        )
+
+
+
 
                 ax.text(
                     'Takttid', faktisk_takt / 2,
@@ -388,13 +403,51 @@ def main():
         ax.bar('Takttid', stiplet_hoeyde - avg_faktisk_takt, bottom=avg_faktisk_takt, color='none', edgecolor='green', hatch='//')
 
         for i in range(len(stages)):
-            percentage = abs(values[i]) / oee_100 * 100
-            y_pos = value_starts[i] + values[i] / 2
-            ax.text(
-                stages[i], y_pos,
-                f'{values[i]} ({percentage:.1f}%)',
-                ha='center', va='center', color='white', fontweight='bold'
-            )
+            if stages[i] == 'Stopptid':
+                if sheet_type == "slakt":
+                    if avg_stopptid_takt < 9:
+                        # Place the text outside the bar if the value is less than 7
+                            dynamic_offset = value_starts[i] + values[i] - 7  # Adjust `-10` for spacing
+                            ax.text(
+                                stages[i], dynamic_offset,
+                                f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                                ha='center', va='top', color='black', fontweight='bold'
+                            )
+                    else:
+                        # Place the text inside the bar if the value is greater than or equal to 7
+                        y_pos = value_starts[i] + values[i] / 2
+                        ax.text(
+                            stages[i], y_pos,
+                            f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                            ha='center', va='center', color='white', fontweight='bold'
+                        )
+                elif sheet_type == "filet":
+                    if avg_stopptid_takt < 1.5:
+                        # Place the text outside the bar if the value is less than 7
+                            dynamic_offset = value_starts[i] + values[i] -1  # Adjust `-10` for spacing
+                            ax.text(
+                                stages[i], dynamic_offset,
+                                f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                                ha='center', va='top', color='black', fontweight='bold'
+                            )
+                    else:
+                        # Place the text inside the bar if the value is greater than or equal to 7
+                        y_pos = value_starts[i] + values[i] / 2
+                        ax.text(
+                            stages[i], y_pos,
+                            f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                            ha='center', va='center', color='white', fontweight='bold'
+                        )
+            else:
+                # Place the text inside other bars as before
+                y_pos = value_starts[i] + values[i] / 2
+                ax.text(
+                    stages[i], y_pos,
+                    f'{values[i]} ({abs(values[i]) / oee_100 * 100:.1f}%)',
+                    ha='center', va='center', color='white', fontweight='bold'
+                )
+
+
 
         ax.text(
             'Takttid', avg_faktisk_takt / 2,
