@@ -54,16 +54,38 @@ def velg_dato():
     return valgt_dato
 
 
-def hent_uke_dager(år, uke_nummer):
-    # Find the Thursday of the previous week
-    torsdag_forrige_uke = datetime.strptime(f'{år}-W{uke_nummer-1}-4', "%Y-W%W-%w")
-    
-    # Collect days: Thursday and Friday from the previous week, and Monday to Wednesday from the current week
-    dager = [torsdag_forrige_uke + timedelta(days=i) for i in range(2)]  # Thursday and Friday
+def hent_uke_dager(år, uke_nummer, df):
+    dager = []
+
+    if uke_nummer == 1:
+        # Handle the edge case for week 1 by looking at the last week of the previous year
+        forrige_år = år - 1
+        uke_forrige_år = 52
+        if datetime.strptime(f'{forrige_år}-12-28', "%Y-%m-%d").isocalendar()[1] == 53:
+            uke_forrige_år = 53
+        torsdag_forrige_uke = datetime.strptime(f'{forrige_år}-W{uke_forrige_år}-4', "%Y-W%W-%w")
+    else:
+        # Normal case: Find Thursday of the previous week
+        torsdag_forrige_uke = datetime.strptime(f'{år}-W{uke_nummer-1}-4', "%Y-W%W-%w")
+
+    # Add Thursday and Friday from the previous week
+    dager += [torsdag_forrige_uke, torsdag_forrige_uke + timedelta(days=1)]  # Thursday and Friday
+
+    # Check and add Saturday and Sunday from the previous week if they exist in the production data
+    lørdag_forrige_uke = torsdag_forrige_uke + timedelta(days=2)  # Saturday
+    søndag_forrige_uke = torsdag_forrige_uke + timedelta(days=3)  # Sunday
+    if lørdag_forrige_uke.date() in df['Dato'].values:
+        dager.append(lørdag_forrige_uke)
+    if søndag_forrige_uke.date() in df['Dato'].values:
+        dager.append(søndag_forrige_uke)
+
+    # Add Monday, Tuesday, and Wednesday from the current week
     mandag_naavaerende_uke = datetime.strptime(f'{år}-W{uke_nummer}-1', "%Y-W%W-%w")
     dager += [mandag_naavaerende_uke + timedelta(days=i) for i in range(3)]  # Monday, Tuesday, Wednesday
-    
+
     return dager
+
+
 
 def beregn_stopptid(row, sheet_type):
     try:
@@ -158,39 +180,26 @@ def main():
     oee_100 = 150 if sheet_type == "slakt" else 25
     stiplet_hoeyde = 120 if sheet_type == "slakt" else 20
 
-    if analysis_type == "Spesifikk dato":
-        valgt_dato = velg_dato()
-    else:
-        year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
-        week_number = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
-        week_days = hent_uke_dager(year, week_number)
-
     if uploaded_file is None:
         st.warning("Vennligst last opp en Excel-fil for å fortsette.")
         return
 
+    # Load and process the data
     df = les_data(uploaded_file, sheet_type)
     if df is None:
         st.warning("Ingen data tilgjengelig i den opplastede filen. Vennligst last opp en gyldig Excel-fil.")
         return
 
-    # Konverter første kolonne til datetime-format
+    # Ensure 'Dato' column exists
     try:
         df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0], format="%Y-%m-%d %H:%M:%S")
-    except ValueError as e:
-        st.error(f"Feil ved konvertering av dato: {e}")
-        st.write("Det kan være et problem med datoformatet i filen, eller du har lastet opp feil type fil.")
-        return
-
-    # Filtrer datoene for å sammenligne basert på år, måned og dag
-    try:
         df['Dato'] = df.iloc[:, 0].dt.date
-    except Exception as e:
+    except ValueError as e:
         st.error(f"Feil ved behandling av datoer: {e}")
-        st.write("Det kan være et problem med strukturen på den opplastede filen.")
         return
 
     if analysis_type == "Spesifikk dato":
+        valgt_dato = velg_dato()
         valgt_dato_enkel = valgt_dato.date()
         if valgt_dato_enkel in df['Dato'].values:
             row = df[df['Dato'] == valgt_dato_enkel].iloc[0]
@@ -273,6 +282,10 @@ def main():
         else:
             st.warning("Datoen du valgte finnes ikke i input-arket. Dette er enten fordi du tastet inn en ugyldig dato eller fordi datoen ikke hadde noen produksjon (eks helg).")
     else:
+        year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
+        week_number = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
+        week_days = hent_uke_dager(year, week_number, df)
+               
         daglig_data = []
         for dag in week_days:
             dag_enkel = dag.date()
