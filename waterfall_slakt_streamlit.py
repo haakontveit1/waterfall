@@ -210,8 +210,6 @@ def beregn_faktiskproduksjon(row, sheet_type):
 
     
 def pen_dato(date):
-    # Set locale to Norwegian
-    locale.setlocale(locale.LC_TIME, "nb_NO.UTF-8")  # Ensure nb_NO.UTF-8 is available on your system
     # Format the datetime object
     formatted_date = date.strftime("%A %d. %B %Y")
     return formatted_date
