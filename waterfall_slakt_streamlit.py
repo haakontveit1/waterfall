@@ -1,11 +1,9 @@
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 from openpyxl import load_workbook
-import locale
-
 
 def les_data(uploaded_file):
     if uploaded_file is not None:
@@ -54,38 +52,44 @@ def velg_dato():
     valgt_dato = datetime(år, maaned, dag)
     return valgt_dato
 
-
-
 def hent_uke_dager(år, uke_nummer):
     dager = []
 
+    # Handle edge case for week 1
     if uke_nummer == 1:
-        # Handle the edge case for week 1 by looking at the last week of the previous year
         forrige_år = år - 1
         uke_forrige_år = 52
-        if datetime.strptime(f'{forrige_år}-12-28', "%Y-%m-%d").isocalendar()[1] == 53:
+        if date(forrige_år, 12, 28).isocalendar()[1] == 53:
             uke_forrige_år = 53
-        torsdag_forrige_uke = datetime.strptime(f'{forrige_år}-W{uke_forrige_år}-4', "%Y-W%W-%w")
+        # Find Thursday of the last week of the previous year using isocalendar
+        torsdag_forrige_uke = date.fromisocalendar(forrige_år, uke_forrige_år, 4)
     else:
-        # Normal case: Find Thursday of the previous week
-        torsdag_forrige_uke = datetime.strptime(f'{år}-W{uke_nummer-1}-4', "%Y-W%W-%w")
+        # Normal case: Find Thursday of the previous week using isocalendar
+        torsdag_forrige_uke = date.fromisocalendar(år, uke_nummer - 1, 4)
 
-    # Add Thursday and Friday from the previous week
-    dager += [torsdag_forrige_uke, torsdag_forrige_uke + timedelta(days=1)]  # Thursday and Friday
+    # Convert to datetime and add Thursday and Friday from the previous week
+    torsdag_forrige_uke_dt = datetime.combine(torsdag_forrige_uke, datetime.min.time())
+    dager += [torsdag_forrige_uke_dt, torsdag_forrige_uke_dt + timedelta(days=1)]  # Thursday and Friday
 
     # Check and add Saturday and Sunday from the previous week if they exist in the production data
-    lørdag_forrige_uke = torsdag_forrige_uke + timedelta(days=2)  # Saturday
-    søndag_forrige_uke = torsdag_forrige_uke + timedelta(days=3)  # Sunday
+    lørdag_forrige_uke = torsdag_forrige_uke_dt + timedelta(days=2)  # Saturday
+    søndag_forrige_uke = torsdag_forrige_uke_dt + timedelta(days=3)  # Sunday
     if lørdag_forrige_uke.date() in df['Dato'].values:
         dager.append(lørdag_forrige_uke)
     if søndag_forrige_uke.date() in df['Dato'].values:
         dager.append(søndag_forrige_uke)
 
-    # Add Monday, Tuesday, and Wednesday from the current week
-    mandag_naavaerende_uke = datetime.strptime(f'{år}-W{uke_nummer}-1', "%Y-W%W-%w")
-    dager += [mandag_naavaerende_uke + timedelta(days=i) for i in range(3)]  # Monday, Tuesday, Wednesday
+    # Add Monday, Tuesday, and Wednesday from the current week using isocalendar
+    try:
+        # Calculate the Monday of the given ISO week directly
+        monday = date.fromisocalendar(år, uke_nummer, 1)
+        dager += [datetime.combine(monday + timedelta(days=i), datetime.min.time()) for i in range(3)]
+    except ValueError as e:
+        st.write(f"Error calculating days for year {år}, week {uke_nummer}: {e}")
 
     return dager
+
+
 
 # def hent_uke_dager(år, uke_nummer):
 #     dager = []
@@ -128,8 +132,7 @@ def beregn_stopptid(row):
         st.error(f"Feil ved beregning av stopptid: {e}")
         return None
     
-    
-    
+
 def beregn_faktiskproduksjon(row):
     try:
         if sheet_type == "slakt":
@@ -257,10 +260,6 @@ def pen_dato(date):
     formatted_date = formatted_date.replace("sÃ¸ndag", "Søndag").replace("lÃ¸rdag", "Lørdag")
 
     return formatted_date
-
-
-
-
 
     
 def lag_graph( 
@@ -396,14 +395,15 @@ def enkelt_dato():
 
 
     return        
-
     
+
 def uke():
     year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
     week_number = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
     week_days = hent_uke_dager(year, week_number)
-           
+    st.write(week_days)
     daglig_data = []
+    i = 1
     for dag in week_days:
         dag_enkel = dag.date()
         if dag_enkel in df['Dato'].values:
@@ -426,11 +426,12 @@ def uke():
             annet = oee_100 - kjente_faktorer - faktisk_takt
             annet = round(annet, 2)
             graf_type = "enkeltgraf"
-            
+            st.write(i)
             lag_graph(
                 annet,
                 faktisk_takt, stopptid_takt,
                 dag, graf_type)
+            i += 1
 
     if not daglig_data:
         st.warning("Ingen gyldige data funnet for den valgte uken.")
@@ -456,7 +457,7 @@ def uke():
         week_number, graf_type
         )
     
-
+    
 def maned():
     
     year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
@@ -497,7 +498,6 @@ def maned():
         st.warning("Vennligst velg et alternativ for å fortsette.")
         return
     
-    
     elif graf_valg == "Alle grafene":
         
         for i in range(len(daglig_data)):
@@ -518,8 +518,6 @@ def maned():
                 daglig_data[i][0], graf_type
                 )
 
-                
-    
     # Print separator for monthly average
     st.write("---")
     st.header(f"Oppsummering for {selected_month} {year}")
@@ -542,9 +540,6 @@ def maned():
         avg_faktisk_takt, avg_stopptid_takt,
         tittel, graf_type)
         
-    
-        
-    
     
 def main():
     st.title("Produksjonsanalyse")
@@ -600,8 +595,10 @@ def main():
     else:            
         
         maned()
-                
-            
-            
+                    
 if __name__ == "__main__":
     main()
+
+
+
+
