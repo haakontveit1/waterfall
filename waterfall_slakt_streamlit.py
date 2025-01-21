@@ -223,7 +223,16 @@ def beregn_faktiskproduksjon(row):
 
     
 def pen_dato(date):
-    # Get day and month names
+    """
+    Formats a datetime object into a string with Norwegian day and month names,
+    ensuring proper encoding for special characters like Æ, Ø, and Å.
+
+    Args:
+        date (datetime): The date to format.
+
+    Returns:
+        str: A formatted date string in Norwegian.
+    """
     # Define Norwegian day and month names
     days = {
         "Monday": "Mandag", "Tuesday": "Tirsdag", "Wednesday": "Onsdag",
@@ -234,25 +243,21 @@ def pen_dato(date):
         "May": "Mai", "June": "Juni", "July": "Juli", "August": "August",
         "September": "September", "October": "Oktober", "November": "November", "December": "Desember"
     }
+
     # Get English day and month names
     english_day = date.strftime("%A")
     english_month = date.strftime("%B")
-    
+
     # Map to Norwegian equivalents
     norwegian_day = days.get(english_day, english_day)
     norwegian_month = months.get(english_month, english_month)
 
-    # Force re-encoding to handle special characters
-    day_name = norwegian_day.encode('latin1').decode('utf-8')
-    month_name = norwegian_month.encode('latin1').decode('utf-8')
+    # Encode and decode to ensure proper rendering
+    norwegian_day = norwegian_day.encode('latin1').decode('utf-8')
+    norwegian_month = norwegian_month.encode('latin1').decode('utf-8')
 
-    # Format the date
-    formatted_date = f"{day_name} {date.day}. {month_name} {date.year}"
-
-    # Debugging output
-    st.write(f"Input date: {date}")
-    st.write(f"Day name: {day_name}, Month name: {month_name}")
-    st.write(f"Formatted date: {formatted_date}")
+    # Format the date in Norwegian
+    formatted_date = f"{norwegian_day} {date.day}. {norwegian_month} {date.year}"
 
     return formatted_date
 
