@@ -223,43 +223,41 @@ def beregn_faktiskproduksjon(row):
 
     
 def pen_dato(date):
-    """
-    Formats a datetime object into a string with Norwegian day and month names,
-    ensuring proper encoding for special characters like Æ, Ø, and Å.
-
-    Args:
-        date (datetime): The date to format.
-
-    Returns:
-        str: A formatted date string in Norwegian.
-    """
-    # Define Norwegian day and month names
-    days = {
-        "Monday": "Mandag", "Tuesday": "Tirsdag", "Wednesday": "Onsdag",
-        "Thursday": "Torsdag", "Friday": "Fredag", "Saturday": "Lørdag", "Sunday": "Søndag"
-    }
+    # Define Norwegian month names
     months = {
         "January": "Januar", "February": "Februar", "March": "Mars", "April": "April",
         "May": "Mai", "June": "Juni", "July": "Juli", "August": "August",
         "September": "September", "October": "Oktober", "November": "November", "December": "Desember"
     }
 
-    # Get English day and month names
-    english_day = date.strftime("%A")
-    english_month = date.strftime("%B")
+    # Get the English day and month names
+    day_name = date.strftime("%A")
+    month_name = date.strftime("%B")
 
-    # Map to Norwegian equivalents
-    norwegian_day = days.get(english_day, english_day)
-    norwegian_month = months.get(english_month, english_month)
+    # Explicitly handle known encoding issues
+    if day_name == "Saturday":
+        norwegian_day = "Lørdag"
+    elif day_name == "Sunday":
+        norwegian_day = "Søndag"
+    else:
+        days = {
+            "Monday": "Mandag", "Tuesday": "Tirsdag", "Wednesday": "Onsdag",
+            "Thursday": "Torsdag", "Friday": "Fredag"
+        }
+        norwegian_day = days.get(day_name, day_name)
 
-    # Encode and decode to ensure proper rendering
-    norwegian_day = norwegian_day.encode('latin1').decode('utf-8')
-    norwegian_month = norwegian_month.encode('latin1').decode('utf-8')
+    # Map month name
+    norwegian_month = months.get(month_name, month_name)
 
-    # Format the date in Norwegian
+    # Format the date
     formatted_date = f"{norwegian_day} {date.day}. {norwegian_month} {date.year}"
 
+    # Final check for encoding issues
+    # Replace incorrectly decoded characters, just in case
+    formatted_date = formatted_date.replace("sÃ¸ndag", "Søndag").replace("lÃ¸rdag", "Lørdag")
+
     return formatted_date
+
 
 
 
