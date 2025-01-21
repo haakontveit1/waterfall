@@ -224,12 +224,27 @@ def beregn_faktiskproduksjon(row):
     
 def pen_dato(date):
     # Get day and month names
-    day_name = date.strftime("%A")
-    month_name = date.strftime("%B")
+    # Define Norwegian day and month names
+    days = {
+        "Monday": "Mandag", "Tuesday": "Tirsdag", "Wednesday": "Onsdag",
+        "Thursday": "Torsdag", "Friday": "Fredag", "Saturday": "Lørdag", "Sunday": "Søndag"
+    }
+    months = {
+        "January": "Januar", "February": "Februar", "March": "Mars", "April": "April",
+        "May": "Mai", "June": "Juni", "July": "Juli", "August": "August",
+        "September": "September", "October": "Oktober", "November": "November", "December": "Desember"
+    }
+    # Get English day and month names
+    english_day = date.strftime("%A")
+    english_month = date.strftime("%B")
+    
+    # Map to Norwegian equivalents
+    norwegian_day = days.get(english_day, english_day)
+    norwegian_month = months.get(english_month, english_month)
 
     # Force re-encoding to handle special characters
-    day_name = day_name.encode('latin1').decode('utf-8')
-    month_name = month_name.encode('latin1').decode('utf-8')
+    day_name = norwegian_day.encode('latin1').decode('utf-8')
+    month_name = norwegian_month.encode('latin1').decode('utf-8')
 
     # Format the date
     formatted_date = f"{day_name} {date.day}. {month_name} {date.year}"
