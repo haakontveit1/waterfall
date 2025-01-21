@@ -173,7 +173,6 @@ def beregn_faktiskproduksjon(row, sheet_type):
                         return None, None
 
                 work_duration = end_time_datetime - start_time
-                st.write(f"{end_time_datetime} og {start_time}")
                 
             arbeidstimer = work_duration.total_seconds() / 60
             antall_fisk = row.iloc[4]
