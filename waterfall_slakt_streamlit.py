@@ -401,9 +401,7 @@ def uke():
     year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
     week_number = st.number_input("Velg uke nummer:", min_value=1, max_value=52)
     week_days = hent_uke_dager(year, week_number)
-    st.write(week_days)
     daglig_data = []
-    i = 1
     for dag in week_days:
         dag_enkel = dag.date()
         if dag_enkel in df['Dato'].values:
@@ -426,12 +424,10 @@ def uke():
             annet = oee_100 - kjente_faktorer - faktisk_takt
             annet = round(annet, 2)
             graf_type = "enkeltgraf"
-            st.write(i)
             lag_graph(
                 annet,
                 faktisk_takt, stopptid_takt,
                 dag, graf_type)
-            i += 1
 
     if not daglig_data:
         st.warning("Ingen gyldige data funnet for den valgte uken.")
