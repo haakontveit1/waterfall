@@ -191,7 +191,7 @@ def beregn_faktiskproduksjon(row):
                 work_duration = end_time_datetime - start_time
                 
             arbeidstimer = work_duration.total_seconds() / 60
-            antall_fisk = row.iloc[4]
+            antall_fisk = row.iloc[5]
 
         elif sheet_type == "filet":
             start_time = datetime.strptime(str(row.iloc[6]), "%H:%M:%S")
