@@ -92,17 +92,16 @@ def hent_uke_dager(år, uke_nummer):
 
 
 # def hent_uke_dager(år, uke_nummer):
-#     dager = []
 #     try:
-#         # Find the Monday of the given week
-#         mandag = datetime.strptime(f'{år}-W{uke_nummer}-1', "%Y-W%W-%w")
+#         # Find the Monday of the given ISO week
+#         mandag = date.fromisocalendar(år, uke_nummer, 1)
         
 #         # Append all days from Monday to Sunday
 #         dager = [mandag + timedelta(days=i) for i in range(7)]
-#     except Exception as e:
+#         return dager
+#     except ValueError as e:
 #         print(f"Feil ved henting av dager for uken: {e}")
-    
-#     return dager
+#         return []
 
 
 def hent_maned_dager(år, maned):
@@ -403,9 +402,8 @@ def uke():
     week_days = hent_uke_dager(year, week_number)
     daglig_data = []
     for dag in week_days:
-        dag_enkel = dag.date()
-        if dag_enkel in df['Dato'].values:
-            row = df[df['Dato'] == dag_enkel].iloc[0]
+        if dag in df['Dato'].values:
+            row = df[df['Dato'] == dag].iloc[0]
             # Format with month as text
             formatted_date = dag.strftime("%d. %B %Y")
             # Print in Norwegian style
