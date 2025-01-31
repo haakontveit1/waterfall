@@ -261,11 +261,7 @@ def pen_dato(date):
     return formatted_date
 
     
-def lag_graph( 
-    annet,
-    faktisk_takt, stopptid_takt,
-    dag, graf_type
-):
+def lag_graph(annet,faktisk_takt, stopptid_takt, dag, graf_type):
 
     if sheet_type == "slakt":
         tittel = "på slakt"
@@ -391,8 +387,6 @@ def enkelt_dato():
             valgt_dato,graf_type)
     else:
         st.warning("Datoen du valgte finnes ikke i input-arket. Dette er enten fordi du tastet inn en ugyldig dato eller fordi datoen ikke hadde noen produksjon (eks helg).")
-
-
     return        
     
 
@@ -452,8 +446,7 @@ def uke():
         )
     
     
-def maned():
-    
+def maned(): 
     year = st.number_input("Velg år:", min_value=2024, max_value=datetime.now().year)
     months = ["Velg måned", "Januar", "Februar", "Mars", "April", "Mai", "Juni", 
               "Juli", "August", "September", "Oktober", "November", "Desember"]
@@ -593,6 +586,7 @@ def main():
             
 if __name__ == "__main__":
     main()
+
 
 
 
