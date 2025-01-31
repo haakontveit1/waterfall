@@ -100,7 +100,10 @@ def hent_uke_dager(år, uke_nummer):
         
 #         # Append all days from Monday to Sunday
 #         dager = [mandag + timedelta(days=i) for i in range(7)]
-#         return dager
+#         date_only = []
+#         for i in dager:
+#             date_only.append(i.strftime("%Y-%m-%d"))
+#         return date_only
 #     except ValueError as e:
 #         print(f"Feil ved henting av dager for uken: {e}")
 #         return []
