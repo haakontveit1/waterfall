@@ -86,8 +86,10 @@ def hent_uke_dager(år, uke_nummer):
         dager += [datetime.combine(monday + timedelta(days=i), datetime.min.time()) for i in range(3)]
     except ValueError as e:
         st.write(f"Error calculating days for year {år}, week {uke_nummer}: {e}")
-
-    return dager
+    date_only = []
+    for i in dager:
+        date_only.append(i.strftime("%Y-%m-%d"))
+    return date_only
 
 
 
@@ -396,6 +398,7 @@ def uke():
     week_days = hent_uke_dager(year, week_number)
     daglig_data = []
     for dag in week_days:
+        dag = datetime.strptime(dag, "%Y-%m-%d").date()
         if dag in df['Dato'].values:
             row = df[df['Dato'] == dag].iloc[0]
             # Format with month as text
