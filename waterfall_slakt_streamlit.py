@@ -242,16 +242,11 @@ def pen_dato(date):
     month_name = date.strftime("%B")
 
     # Explicitly handle known encoding issues
-    if day_name == "Saturday":
-        norwegian_day = "Lørdag"
-    elif day_name == "Sunday":
-        norwegian_day = "Søndag"
-    else:
-        days = {
-            "Monday": "Mandag", "Tuesday": "Tirsdag", "Wednesday": "Onsdag",
-            "Thursday": "Torsdag", "Friday": "Fredag"
+    days = {
+        "Monday": "Mandag", "Tuesday": "Tirsdag", "Wednesday": "Onsdag",
+        "Thursday": "Torsdag", "Friday": "Fredag", "Saturday" : "Lørdag", "Sunday" : "Søndag"
         }
-        norwegian_day = days.get(day_name, day_name)
+    norwegian_day = days.get(day_name, day_name)
 
     # Map month name
     norwegian_month = months.get(month_name, month_name)
